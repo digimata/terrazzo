@@ -28,6 +28,12 @@ import "./canvas.css";
 
 const shapeUtils = [ItemShapeUtil];
 
+// Strip stock tldraw chrome we don't want; more goes as the design pass
+// replaces each piece (v0: the canvas is ours, the library is invisible).
+const components = {
+  StylePanel: null,
+};
+
 const GAP = 32;
 const COLS = 8;
 
@@ -296,6 +302,7 @@ export default function CanvasView({
     <div className="canvas-root">
       <Tldraw
         shapeUtils={shapeUtils}
+        components={components}
         onMount={(editor) => {
           editorRef.current = editor;
           const util = editor.getShapeUtil("item") as ItemShapeUtil;
