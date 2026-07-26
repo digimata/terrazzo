@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { AppMode } from "./mode";
 import type { WorkspaceInfo } from "./ipc/types";
-import { useEscapeOwnedByApp } from "./hooks/keyboard";
+import { useKeyboardDispatcher, useKeymap } from "./hooks/keyboard";
 import StartScreen from "./StartScreen";
 import CanvasView from "../canvas/CanvasView";
 import MediaView from "../media/MediaView";
@@ -9,7 +9,11 @@ import "./app.css";
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>({ type: "start" });
-  useEscapeOwnedByApp();
+  useKeyboardDispatcher();
+  useKeymap({
+    "cmd+[": () => goBack(),
+    "cmd+]": () => goForward(),
+  });
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
   const [back, setBack] = useState<string[]>([]);
   const [forward, setForward] = useState<string[]>([]);

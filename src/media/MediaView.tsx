@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { openDirectory } from "../app/ipc/commands";
 import type { CanvasItem } from "../app/ipc/types";
-import { useEscape } from "../app/hooks/keyboard";
+import { useKeymap } from "../app/hooks/keyboard";
 import "./media.css";
 
 function formatBytes(size: number) {
@@ -61,7 +61,7 @@ export default function MediaView({
     };
   }, [directoryPath, itemId, onClose]);
 
-  useEscape(onClose);
+  useKeymap({ escape: onClose });
 
   if (!item) return <div className="media-root" />;
 
