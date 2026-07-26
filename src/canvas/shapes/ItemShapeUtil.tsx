@@ -24,9 +24,12 @@ export interface ItemShapeProps {
   h: number;
   name: string;
   kind: FileKind;
-  /** Absolute path — spike-grade identity. M2 replaces this with the
-   * sidecar's UUIDv7 item id. */
+  /** Absolute path of the underlying file (durable identity is the sidecar
+   * UUID the shape id derives from). */
   path: string;
+  /** Asset-protocol URL of the rendered preview (image thumbnail or video
+   * poster frame). Empty until the thumbnail queue delivers (PR-014). */
+  thumbnail: string;
 }
 
 declare module "@tldraw/tlschema" {
@@ -84,10 +87,18 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     name: T.string,
     kind: kindValidator,
     path: T.string,
+    thumbnail: T.string,
   };
 
   override getDefaultProps(): ItemShape["props"] {
-    return { w: ITEM_W, h: ITEM_H, name: "", kind: "other", path: "" };
+    return {
+      w: ITEM_W,
+      h: ITEM_H,
+      name: "",
+      kind: "other",
+      path: "",
+      thumbnail: "",
+    };
   }
 
   override getGeometry(shape: ItemShape) {
@@ -107,7 +118,50 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   }
 
   override component(shape: ItemShape) {
-    const { name, kind } = shape.props;
+    const { name, kind, thumbnail } = shape.props;
+
+    if (thumbnail) {
+      return (
+        <HTMLContainer
+          style={{
+            position: "relative",
+            borderRadius: 8,
+            overflow: "hidden",
+            background: "#1f2430",
+            pointerEvents: "all",
+          }}
+        >
+          <img
+            src={thumbnail}
+            draggable={false}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+          {kind === "video" && (
+            <span
+              style={{
+                position: "absolute",
+                top: 8,
+                left: 8,
+                padding: "3px 6px",
+                borderRadius: 4,
+                background: "rgba(16, 16, 20, 0.7)",
+                font: "600 9px/1 ui-monospace, monospace",
+                letterSpacing: "0.08em",
+                color: "#e6e9ef",
+              }}
+            >
+              VID
+            </span>
+          )}
+        </HTMLContainer>
+      );
+    }
+
     return (
       <HTMLContainer
         style={{

@@ -16,7 +16,7 @@ pub fn run() {
             commands::open_directory,
             commands::apply_layout,
             commands::rescan,
-            commands::generate_poster,
+            commands::ensure_thumbnail,
             commands::import_files
         ])
         .run(tauri::generate_context!())

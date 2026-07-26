@@ -10,7 +10,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Editor, Tldraw, createShapeId } from "tldraw";
 import "tldraw/tldraw.css";
-import { applyLayout, openDirectory } from "../app/ipc/commands";
+import { convertFileSrc } from "@tauri-apps/api/core";
+import {
+  applyLayout,
+  ensureThumbnail,
+  openDirectory,
+} from "../app/ipc/commands";
 import { onFsEvent } from "../app/ipc/events";
 import type { CanvasItem, LayoutDelta } from "../app/ipc/types";
 import {
@@ -121,6 +126,43 @@ export default function CanvasView({
     }, 400);
   }
 
+  /** Deliver thumbnails as they generate (PR-014: placeholder until then).
+   * Concurrency-limited; each delivery patches one shape's thumbnail prop.
+   * Programmatic patches run under the hydrating flag so they never count
+   * as layout changes. */
+  async function fillThumbnails(editor: Editor, items: CanvasItem[]) {
+    const queue = items.filter(
+      (i) => i.entry.kind === "image" || i.entry.kind === "video",
+    );
+    const worker = async () => {
+      for (let item = queue.shift(); item; item = queue.shift()) {
+        let url: string;
+        if (item.entry.path.toLowerCase().endsWith(".svg")) {
+          url = convertFileSrc(item.entry.path); // ffmpeg can't; svg is small
+        } else {
+          try {
+            url = convertFileSrc(await ensureThumbnail(item.entry.path));
+          } catch {
+            continue; // unreadable/corrupt media keeps its placeholder card
+          }
+        }
+        const shape = editor.getShape(shapeIdFor(item.id)) as
+          | ItemShape
+          | undefined;
+        if (!shape || shape.props.thumbnail === url) continue;
+        hydrating.current = true;
+        try {
+          editor.updateShapes<ItemShape>([
+            { id: shape.id, type: "item", props: { thumbnail: url } },
+          ]);
+        } finally {
+          hydrating.current = false;
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: 4 }, worker));
+  }
+
   async function hydrate(editor: Editor) {
     hydrating.current = true;
     try {
@@ -148,6 +190,7 @@ export default function CanvasView({
           ),
         );
       }
+      void fillThumbnails(editor, items);
     } finally {
       hydrating.current = false;
     }
@@ -193,6 +236,7 @@ export default function CanvasView({
       hydrating.current = false;
     }
     setStatus(`${items.length} items`);
+    void fillThumbnails(editor, items);
   }
 
   // User interactions → dirty item ids → debounced sidecar flush.

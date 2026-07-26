@@ -81,11 +81,16 @@ pub fn rescan(state: State<AppState>) -> AppResult<Vec<scan::FileEntry>> {
     scan::scan(&state.root()?)
 }
 
+/// Async so ffmpeg runs off the main thread (the canvas never blocks on
+/// thumbnail generation, PR-014).
 #[tauri::command]
-pub fn generate_poster(state: State<AppState>, video_path: String) -> AppResult<String> {
+pub async fn ensure_thumbnail(
+    state: State<'_, AppState>,
+    path: String,
+) -> AppResult<String> {
     let root = state.root()?;
-    let video = paths::ensure_inside(&root, Path::new(&video_path))?;
-    let out = poster::generate(&root, &video)?;
+    let source = paths::ensure_inside(&root, Path::new(&path))?;
+    let out = poster::ensure(&root, &source)?;
     Ok(out.to_string_lossy().to_string())
 }
 

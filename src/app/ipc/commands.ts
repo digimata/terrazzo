@@ -41,10 +41,11 @@ export function rescan(): Promise<FileEntry[]> {
   return invoke("rescan");
 }
 
-/** Generate a poster frame for a video via ffmpeg; returns the poster path
- * inside `.canvas/thumbnails/`. */
-export function generatePoster(videoPath: string): Promise<string> {
-  return invoke("generate_poster", { videoPath });
+/** Ensure a thumbnail (image downscale / video poster frame) exists for a
+ * file; returns its path inside `.canvas/thumbnails/`. Runs off the main
+ * thread — safe to fan out. */
+export function ensureThumbnail(path: string): Promise<string> {
+  return invoke("ensure_thumbnail", { path });
 }
 
 /** Copy external files into the workspace (Finder drop). Never moves or
