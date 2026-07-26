@@ -2,12 +2,18 @@
 // One function per Rust command in src-tauri/src/commands.rs.
 
 import { invoke } from "@tauri-apps/api/core";
-import type { FileEntry } from "./types";
+import type { FileEntry, WorkspaceInfo } from "./types";
 
-/** Select the workspace root: validates, scopes assets, starts the watcher,
- * and returns a full recursive scan. */
-export function setWorkspace(path: string): Promise<FileEntry[]> {
+/** Select the workspace root: validates, scopes assets, loads or creates
+ * `.canvas/workspace.json`, and starts the watcher. */
+export function setWorkspace(path: string): Promise<WorkspaceInfo> {
   return invoke("set_workspace", { path });
+}
+
+/** Immediate children of one directory inside the workspace — the unit a
+ * canvas hydrates from. */
+export function listDir(path: string): Promise<FileEntry[]> {
+  return invoke("list_dir", { path });
 }
 
 /** Re-scan the active workspace. */

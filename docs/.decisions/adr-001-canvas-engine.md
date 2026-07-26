@@ -43,7 +43,7 @@ Rust workspace service
 Before building the product, one screen must prove the risky parts of the WKWebView path:
 
 - 200 image/video poster shapes panning and zooming at 60fps (PR-021)
-- Four simultaneously playing videos, including **seeking** — asset-protocol range-request handling is the known Tauri/WKWebView weak spot for video
+- Four simultaneously playing videos as an asset-path stress test, with immediate click-to-seek. Smooth drag-scrubbing is not a gate, and the product canvas will show posters rather than live video controls
 - Finder drag-in landing at exact canvas coordinates
 - A dynamically selected workspace directory served through Tauri's asset protocol
 - Recursive file watching
@@ -56,7 +56,7 @@ Pass → keep Tauri. Fail on anything renderer-specific → switch the shell to 
 
 - All spatial logic operates in tldraw's world-coordinate space; terrazzo code never does its own screen-space math.
 - File types are implemented as tldraw custom shapes; the shape layer is the seam between canvas and storage.
-- Media performance is managed in app code (poster-at-rest, capped live players, viewport culling — PR-006/007/021), since the web stack doesn't get AVFoundation's efficiency for free.
+- Media performance is managed in app code (poster-only canvas objects, one focused live player, viewport culling — PR-006/007/021/031), since the web stack doesn't get AVFoundation's efficiency for free.
 - The webview never touches the disk directly; every filesystem effect goes through a named Rust command, which keeps the Electron fallback a shell swap rather than a rewrite.
 - `.canvas/workspace.json` identifies the root. Every Rust command resolves its target against that root after canonicalization; UI paths are never treated as authority.
 

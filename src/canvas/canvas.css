@@ -1,0 +1,17 @@
+.canvas-root {
+  position: fixed;
+  inset: 0;
+}
+
+.canvas-status {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 4px 8px;
+  background: rgba(20, 20, 24, 0.85);
+  color: #8a8f98;
+  font: 11px/1 ui-monospace, monospace;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 10;
+}

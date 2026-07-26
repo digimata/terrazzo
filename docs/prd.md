@@ -23,7 +23,7 @@ Structure follows the standard domain → feature (`F-xxx`) → requirement (`PR
 | Domain | Abbrev | What it covers |
 |---|---|---|
 | **Canvas** | `CV` | The interaction surface — pan/zoom, selection, manipulation, precision (snapping, guides, coordinates) |
-| **Media** | `ME` | Rendering file types on the canvas — images, video, PDF, markdown, and fallbacks |
+| **Media** | `ME` | Rendering file types on the canvas and opening focused image, video, PDF, and Markdown views |
 | **Storage** | `ST` | The on-disk model — layout sidecars, thumbnails, file identity, external-change reconciliation |
 | **Navigation** | `NV` | Workspace-bounded recursion — folder cards, entering/leaving canvases, breadcrumbs |
 | **Generation** | `GE` | Optional image and video generation — variations, references, asynchronous jobs, and local output provenance |
@@ -50,6 +50,7 @@ Cross-cutting requirements (deletion semantics, performance floor) live in §3.6
 | **F-ME3** — Documents | PDF previews and rendered markdown notes | PR-008, PR-009 | P1 |
 | **F-ME4** — Fallback previews | Quick Look thumbnails for everything else | PR-010 | P2 |
 | **F-ME5** — Note editor | Click a note card to open a beautiful in-app markdown editor (Spatial's pattern), with Vim mode | PR-023, PR-024 | P1 |
+| **F-ME6** — Media viewer | Open an image or video in a dedicated Spatial-style viewing surface | PR-031 | P0 |
 
 ### 2.3 — Storage
 
@@ -92,14 +93,15 @@ Cross-cutting requirements (deletion semantics, performance floor) live in §3.6
 
 | Requirement | Description | Feature | Priority |
 |---|---|---|---|
-| **PR-005** — Image rendering | PNG, JPEG, GIF, SVG, WebP render as canvas objects at native aspect ratio, downsampled to viewport resolution when zoomed out. | F-ME1 | P0 |
-| **PR-006** — Video posters | Videos display a generated poster frame at rest. No live `<video>` element exists for off-screen or at-rest items. | F-ME2 | P0 |
-| **PR-007** — Video playback | Playback starts on explicit interaction (click or hover, configurable). Concurrent live players capped; furthest-from-viewport evicted first. | F-ME2 | P0 |
+| **PR-005** — Image rendering | PNG, JPEG, GIF, SVG, and WebP render as canvas objects at native aspect ratio, downsampled to viewport resolution when zoomed out. Activating an image opens the focused media view under PR-031. | F-ME1 | P0 |
+| **PR-006** — Video posters | Videos display generated poster frames on the canvas. Canvas video objects do not mount live `<video>` elements or expose playback timelines; playback belongs to the focused media view under PR-031. | F-ME2 | P0 |
+| **PR-007** — Video playback | The focused media view provides play, pause, volume, and seeking. Clicking a point on the timeline must jump there promptly. Smooth continuous preview while dragging the timeline thumb is not a v0 requirement. The canvas has no video scrubber. | F-ME2 | P0 |
 | **PR-008** — PDF previews | PDFs render first-page previews; click opens a paging view or hands off to the system viewer. | F-ME3 | P1 |
 | **PR-009** — Markdown notes | `.md` files render as styled note cards using cached static HTML, not mounted CodeMirror instances. Cards and the editor share the same Markdown parser configuration and typography, but only the active document mounts an editor runtime. | F-ME3 | P1 |
 | **PR-010** — Quick Look fallback | Any format terrazzo doesn't render itself gets a `qlmanage`-generated thumbnail and opens via Quick Look / system default. | F-ME4 | P2 |
 | **PR-023** — In-app editor | Clicking a note card opens a full editing surface (Spatial's pattern). CodeMirror 6 with permanent WYSIWYG decorations: markdown syntax (`**`, `#`, link targets) is **never revealed** — not on cursor entry, not on selection (explicitly rejecting Obsidian's reveal behavior). Markers stay hidden as atomic ranges; formatting is applied via commands (Cmd+B/I/K, Cmd+1–3) that edit the hidden markers programmatically. Escape hatch: an explicit source-mode toggle shows raw markdown on request. The markdown buffer is canonical — no rich-text document model, no parse/serialize round trip, unknown syntax never lost (Principle 1). Chrome stripped: no gutters, no line numbers, proportional font. Autosaves to disk; closing returns to the canvas. Architecture in [ADR-002](.decisions/adr-002-note-editor.md). | F-ME5 | P1 |
 | **PR-024** — Vim mode | Vim is a dynamically toggled CodeMirror compartment extension (`@replit/codemirror-vim`). Enabling Vim also disables WYSIWYG concealment and enters syntax-visible Markdown source mode, so motions and operators act on the same characters the user sees. Normal, insert, and visual modes, counts, operators, mappings, and Ex commands retain their standard buffer semantics. A visible indicator shows the active mode. Escape belongs to Vim; leaving the editor is `:q`, `:wq`, or an explicit shortcut. `:w` saves immediately. Disabling Vim restores the concealed writing view. | F-ME5 | P2 |
+| **PR-031** — Focused media view | Activating an image or video opens an in-app media mode patterned after Spatial rather than handing the file to an external editor. The media occupies the main visual field against quiet chrome. A secondary metadata area shows the filename, media type, pixel dimensions or video resolution, file size, and created/modified dates when available; an optional notes or caption area may appear below. Images fit within the available viewport without altering the file. Videos use the controls defined by PR-007. Closing or navigating back returns to the same canvas camera, selection, and scroll state. Automatic color-palette extraction and media editing are not required in v0. | F-ME6 | P0 |
 
 ### 3.3 — Storage
 

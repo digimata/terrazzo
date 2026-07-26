@@ -1,0 +1,41 @@
+.start-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: #16161c;
+  font-family: -apple-system, system-ui, sans-serif;
+}
+
+.start-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #8a8f98;
+}
+
+.start-open {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid #3a3f4b;
+  background: #23283a;
+  color: #e6e9ef;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.start-open:hover {
+  background: #2b3147;
+}
+
+.start-error {
+  max-width: 480px;
+  color: #f7768e;
+  font: 11px/1.5 ui-monospace, monospace;
+  word-break: break-all;
+}

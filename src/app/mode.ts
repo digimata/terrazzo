@@ -3,7 +3,7 @@
 // so a future Vim compartment can claim Escape without touching the canvas.
 
 export type AppMode =
-  | { type: "spike" } // Gate 0 only; deleted when the gate closes
+  | { type: "start" } // no workspace selected yet
   | { type: "canvas"; directoryPath: string }
   | { type: "document"; itemId: string; view: "writing" | "source" }
   | { type: "media"; itemId: string };

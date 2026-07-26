@@ -12,6 +12,7 @@ pub fn run() {
         .manage(state::AppState::default())
         .invoke_handler(tauri::generate_handler![
             commands::set_workspace,
+            commands::list_dir,
             commands::rescan,
             commands::generate_poster,
             commands::import_files

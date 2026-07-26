@@ -68,6 +68,28 @@ pub fn entry_for(path: &Path) -> AppResult<FileEntry> {
     })
 }
 
+/// Immediate children of one directory, dotfiles skipped. Sorted folders
+/// first, then case-insensitive by name — the default order a canvas lays
+/// out before a layout sidecar exists.
+pub fn list_dir(dir: &Path) -> AppResult<Vec<FileEntry>> {
+    let mut out = Vec::new();
+    for entry in std::fs::read_dir(dir)?.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        if name.starts_with('.') {
+            continue;
+        }
+        if let Ok(file_entry) = entry_for(&entry.path()) {
+            out.push(file_entry);
+        }
+    }
+    out.sort_by(|a, b| {
+        b.is_dir
+            .cmp(&a.is_dir)
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+    });
+    Ok(out)
+}
+
 /// Recursive scan of the workspace. Dotfiles (including `.canvas/`) never
 /// appear on a canvas and are skipped entirely.
 pub fn scan(root: &Path) -> AppResult<Vec<FileEntry>> {

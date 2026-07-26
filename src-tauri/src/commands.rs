@@ -5,29 +5,51 @@ use std::path::{Path, PathBuf};
 
 use tauri::{AppHandle, Manager, State};
 
+use serde::Serialize;
+
 use crate::error::AppResult;
 use crate::media::poster;
 use crate::state::{AppState, Workspace};
-use crate::workspace::{import, paths, scan, watch};
+use crate::workspace::{import, paths, scan, sidecar, watch};
+
+/// Mirrored by `WorkspaceInfo` in `src/app/ipc/types.ts`.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceInfo {
+    pub root: String,
+    pub meta: sidecar::WorkspaceMeta,
+}
 
 #[tauri::command]
 pub fn set_workspace(
     app: AppHandle,
     state: State<AppState>,
     path: String,
-) -> AppResult<Vec<scan::FileEntry>> {
+) -> AppResult<WorkspaceInfo> {
     let root = paths::canonical_root(&PathBuf::from(&path))?;
 
     app.asset_protocol_scope()
         .allow_directory(&root, true)
         .map_err(|e| crate::error::AppError::new(crate::error::ErrorCode::Io, e.to_string()))?;
 
+    let meta = sidecar::load_or_create(&root)?;
     let watcher = watch::spawn(app.clone(), &root)?;
     *state.0.lock().unwrap() = Some(Workspace {
         root: root.clone(),
         _watcher: watcher,
     });
-    scan::scan(&root)
+    Ok(WorkspaceInfo {
+        root: root.to_string_lossy().to_string(),
+        meta,
+    })
+}
+
+/// Immediate children of one directory — the unit a canvas hydrates from.
+#[tauri::command]
+pub fn list_dir(state: State<AppState>, path: String) -> AppResult<Vec<scan::FileEntry>> {
+    let root = state.root()?;
+    let dir = paths::ensure_inside(&root, Path::new(&path))?;
+    scan::list_dir(&dir)
 }
 
 #[tauri::command]

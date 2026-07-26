@@ -18,6 +18,20 @@ export interface FileEntry {
   isDir: boolean;
 }
 
+/** Mirrors `workspace::sidecar::WorkspaceMeta` (`.canvas/workspace.json`). */
+export interface WorkspaceMeta {
+  schemaVersion: number;
+  workspaceId: string;
+  name: string;
+}
+
+/** Mirrors `commands::WorkspaceInfo` — the result of `set_workspace`. */
+export interface WorkspaceInfo {
+  /** Canonicalized absolute root. The hard boundary. */
+  root: string;
+  meta: WorkspaceMeta;
+}
+
 /** Mirrors `error::AppError` — every rejected invoke carries this shape. */
 export interface AppError {
   code:
