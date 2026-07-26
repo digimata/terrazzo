@@ -11,9 +11,11 @@ import { useEffect, useRef, useState } from "react";
 import { Editor, Tldraw, createShapeId } from "tldraw";
 import "tldraw/tldraw.css";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import {
   applyLayout,
   ensureThumbnail,
+  importFiles,
   openDirectory,
 } from "../app/ipc/commands";
 import { onFsEvent } from "../app/ipc/events";
@@ -287,6 +289,60 @@ export default function CanvasView({
     });
     return () => {
       if (timer) clearTimeout(timer);
+      unlisten.then((fn) => fn());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [directoryPath]);
+
+  // Finder drop: copy into this directory (never move, PR-013), then place
+  // the new items at the drop point and persist their frames immediately.
+  useEffect(() => {
+    const unlisten = getCurrentWebview().onDragDropEvent(async (event) => {
+      if (event.payload.type !== "drop") return;
+      const editor = editorRef.current;
+      if (!editor) return;
+      const point = editor.screenToPage({
+        x: event.payload.position.x / window.devicePixelRatio,
+        y: event.payload.position.y / window.devicePixelRatio,
+      });
+      try {
+        const imported = await importFiles(event.payload.paths, directoryPath);
+        const importedPaths = new Set(imported.map((e) => e.path));
+        const items = await openDirectory(directoryPath);
+        const dropped = items.filter((i) => importedPaths.has(i.entry.path));
+
+        hydrating.current = true;
+        try {
+          dropped.forEach((item, i) => {
+            const offset = i * 24;
+            editor.createShapes<ItemShape>([
+              {
+                ...shapeFor(item, () => ({ x: 0, y: 0 })),
+                x: point.x + offset,
+                y: point.y + offset,
+              },
+            ]);
+            knownIds.current.add(item.id);
+          });
+        } finally {
+          hydrating.current = false;
+        }
+        if (dropped.length > 0) {
+          await applyLayout(
+            directoryPath,
+            deltasFor(
+              editor,
+              dropped.map((i) => i.id),
+            ),
+          );
+          void fillThumbnails(editor, dropped);
+        }
+        setStatus(`imported ${dropped.length} file(s)`);
+      } catch (e) {
+        setStatus(`import failed: ${JSON.stringify(e)}`);
+      }
+    });
+    return () => {
       unlisten.then((fn) => fn());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
