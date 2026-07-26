@@ -10,7 +10,7 @@ use serde::Serialize;
 use crate::error::AppResult;
 use crate::media::poster;
 use crate::state::{AppState, Workspace};
-use crate::workspace::{import, paths, scan, sidecar, watch};
+use crate::workspace::{import, layout, paths, scan, sidecar, watch};
 
 /// Mirrored by `WorkspaceInfo` in `src/app/ipc/types.ts`.
 #[derive(Serialize)]
@@ -50,6 +50,30 @@ pub fn list_dir(state: State<AppState>, path: String) -> AppResult<Vec<scan::Fil
     let root = state.root()?;
     let dir = paths::ensure_inside(&root, Path::new(&path))?;
     scan::list_dir(&dir)
+}
+
+/// Reconcile one directory's listing with its layout sidecar and return the
+/// canvas items (v0 plan §4.2: the tldraw store is a projection of this).
+#[tauri::command]
+pub fn open_directory(
+    state: State<AppState>,
+    path: String,
+) -> AppResult<Vec<layout::CanvasItem>> {
+    let root = state.root()?;
+    let dir = paths::ensure_inside(&root, Path::new(&path))?;
+    layout::open_directory(&dir)
+}
+
+/// Persist layout deltas for one directory after an interaction ends.
+#[tauri::command]
+pub fn apply_layout(
+    state: State<AppState>,
+    path: String,
+    deltas: Vec<layout::LayoutDelta>,
+) -> AppResult<()> {
+    let root = state.root()?;
+    let dir = paths::ensure_inside(&root, Path::new(&path))?;
+    layout::apply_deltas(&dir, &deltas)
 }
 
 #[tauri::command]

@@ -3,24 +3,105 @@ import type { AppMode } from "./mode";
 import type { WorkspaceInfo } from "./ipc/types";
 import StartScreen from "./StartScreen";
 import CanvasView from "../canvas/CanvasView";
+import "./app.css";
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>({ type: "start" });
-  const [, setWorkspace] = useState<WorkspaceInfo | null>(null);
+  const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
+  const [back, setBack] = useState<string[]>([]);
+  const [forward, setForward] = useState<string[]>([]);
 
-  switch (mode.type) {
-    case "start":
-      return (
-        <StartScreen
-          onWorkspace={(info) => {
-            setWorkspace(info);
-            setMode({ type: "canvas", directoryPath: info.root });
-          }}
-        />
-      );
-    case "canvas":
-      return <CanvasView directoryPath={mode.directoryPath} />;
-    default:
-      return null;
+  function navigate(path: string) {
+    if (mode.type === "canvas") {
+      if (path === mode.directoryPath) return;
+      setBack((s) => [...s, mode.directoryPath]);
+      setForward([]);
+    }
+    setMode({ type: "canvas", directoryPath: path });
   }
+
+  function goBack() {
+    if (mode.type !== "canvas" || back.length === 0) return;
+    const prev = back[back.length - 1];
+    setBack((s) => s.slice(0, -1));
+    setForward((s) => [...s, mode.directoryPath]);
+    setMode({ type: "canvas", directoryPath: prev });
+  }
+
+  function goForward() {
+    if (mode.type !== "canvas" || forward.length === 0) return;
+    const next = forward[forward.length - 1];
+    setForward((s) => s.slice(0, -1));
+    setBack((s) => [...s, mode.directoryPath]);
+    setMode({ type: "canvas", directoryPath: next });
+  }
+
+  if (mode.type === "start") {
+    return (
+      <StartScreen
+        onWorkspace={(info) => {
+          setWorkspace(info);
+          setMode({ type: "canvas", directoryPath: info.root });
+        }}
+      />
+    );
+  }
+
+  if (mode.type === "canvas" && workspace) {
+    const relative = mode.directoryPath
+      .slice(workspace.root.length)
+      .split("/")
+      .filter(Boolean);
+    const crumbs = [
+      { label: workspace.meta.name, path: workspace.root },
+      ...relative.map((segment, i) => ({
+        label: segment,
+        path: `${workspace.root}/${relative.slice(0, i + 1).join("/")}`,
+      })),
+    ];
+
+    return (
+      <div className="app-root">
+        <div className="app-topbar">
+          <button
+            className="app-nav"
+            onClick={goBack}
+            disabled={back.length === 0}
+          >
+            &lsaquo;
+          </button>
+          <button
+            className="app-nav"
+            onClick={goForward}
+            disabled={forward.length === 0}
+          >
+            &rsaquo;
+          </button>
+          <div className="app-crumbs">
+            {crumbs.map((crumb, i) => (
+              <span key={crumb.path}>
+                {i > 0 && <span className="app-crumb-sep">/</span>}
+                <button
+                  className="app-crumb"
+                  disabled={i === crumbs.length - 1}
+                  onClick={() => navigate(crumb.path)}
+                >
+                  {crumb.label}
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="app-canvas">
+          <CanvasView
+            key={mode.directoryPath}
+            directoryPath={mode.directoryPath}
+            onEnterDirectory={navigate}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }

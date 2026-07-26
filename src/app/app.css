@@ -1,0 +1,78 @@
+.app-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #16161c;
+}
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #26262e;
+  font-family: -apple-system, system-ui, sans-serif;
+  z-index: 10;
+}
+
+.app-nav {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #8a8f98;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.app-nav:hover:not(:disabled) {
+  background: #23232b;
+  color: #e6e9ef;
+}
+
+.app-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.app-crumbs {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.app-crumb {
+  border: none;
+  background: transparent;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #8a8f98;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.app-crumb:hover:not(:disabled) {
+  background: #23232b;
+  color: #e6e9ef;
+}
+
+.app-crumb:disabled {
+  color: #c8ccd4;
+  cursor: default;
+}
+
+.app-crumb-sep {
+  color: #3a3f4b;
+  font-size: 12px;
+  padding: 0 2px;
+}
+
+.app-canvas {
+  flex: 1;
+  position: relative;
+}

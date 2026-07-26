@@ -13,6 +13,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::set_workspace,
             commands::list_dir,
+            commands::open_directory,
+            commands::apply_layout,
             commands::rescan,
             commands::generate_poster,
             commands::import_files

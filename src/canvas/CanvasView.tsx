@@ -1,13 +1,18 @@
-// The real canvas (M1): hydrates one directory's immediate children as item
-// shapes. Positions are session-only until the layout sidecar lands in M2;
-// identity across fs events is inode-keyed until sidecar UUIDs replace it.
+// One directory's canvas (M2): the tldraw store is a projection of the
+// directory listing + layout.json (v0 plan §4.2). Hydration reads reconciled
+// items from open_directory; user interactions project back as typed layout
+// deltas after the interaction ends (§4.4). Identity is the sidecar UUIDv7 —
+// the tldraw shape id is derived from it, so lookups are O(1) both ways.
+//
+// The component is keyed by directoryPath in App: entering a folder remounts
+// with a fresh store. Cameras persist per directory for the session only.
 
 import { useEffect, useRef, useState } from "react";
-import { Editor, TLShapeId, Tldraw, createShapeId } from "tldraw";
+import { Editor, Tldraw, createShapeId } from "tldraw";
 import "tldraw/tldraw.css";
-import { listDir } from "../app/ipc/commands";
+import { applyLayout, openDirectory } from "../app/ipc/commands";
 import { onFsEvent } from "../app/ipc/events";
-import type { FileEntry } from "../app/ipc/types";
+import type { CanvasItem, LayoutDelta } from "../app/ipc/types";
 import {
   ITEM_H,
   ITEM_W,
@@ -21,103 +26,225 @@ const shapeUtils = [ItemShapeUtil];
 const GAP = 32;
 const COLS = 8;
 
-function gridPos(i: number) {
-  return {
-    x: (i % COLS) * (ITEM_W + GAP),
-    y: Math.floor(i / COLS) * (ITEM_H + GAP),
-  };
+/** Session-only per-directory viewport (v0 plan §5.3 item 6). */
+const cameraByDir = new Map<string, { x: number; y: number; z: number }>();
+
+function shapeIdFor(itemId: string) {
+  return createShapeId(itemId);
 }
 
-function itemShape(entry: FileEntry, index: number) {
+function itemIdFor(shapeId: string) {
+  return shapeId.slice("shape:".length);
+}
+
+/** Grid slot for items that have never been placed. Starts below the lowest
+ * framed item so new arrivals never land on top of an arrangement. */
+function makePlacer(items: CanvasItem[]) {
+  const framed = items.filter((i) => i.frame);
+  const baseY =
+    framed.length === 0
+      ? 0
+      : Math.max(...framed.map((i) => i.frame!.y + i.frame!.height)) + GAP;
+  let slot = 0;
+  return () => ({
+    x: (slot % COLS) * (ITEM_W + GAP),
+    y: baseY + Math.floor(slot++ / COLS) * (ITEM_H + GAP),
+  });
+}
+
+function shapeFor(item: CanvasItem, place: () => { x: number; y: number }) {
+  const frame = item.frame ?? { ...place(), width: ITEM_W, height: ITEM_H };
   return {
-    id: createShapeId(),
+    id: shapeIdFor(item.id),
     type: "item" as const,
-    ...gridPos(index),
+    x: frame.x,
+    y: frame.y,
+    rotation: item.rotation,
     props: {
-      w: ITEM_W,
-      h: ITEM_H,
-      name: entry.name,
-      kind: entry.kind,
-      path: entry.path,
+      w: frame.width,
+      h: frame.height,
+      name: item.entry.name,
+      kind: item.entry.kind,
+      path: item.entry.path,
     },
   };
 }
 
 export default function CanvasView({
   directoryPath,
+  onEnterDirectory,
 }: {
   directoryPath: string;
+  onEnterDirectory: (path: string) => void;
 }) {
   const editorRef = useRef<Editor | null>(null);
-  const shapeByInode = useRef<Map<number, TLShapeId>>(new Map());
-  const placed = useRef(0);
+  const knownIds = useRef<Set<string>>(new Set());
+  const hydrating = useRef(false);
+  const dirty = useRef<Set<string>>(new Set());
+  const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [status, setStatus] = useState("");
 
-  async function hydrate(editor: Editor) {
-    const entries = await listDir(directoryPath);
-    const existing = [...editor.getCurrentPageShapeIds()];
-    if (existing.length > 0) editor.deleteShapes(existing);
-    shapeByInode.current.clear();
-
-    const shapes = entries.map((entry, i) => {
-      const shape = itemShape(entry, i);
-      shapeByInode.current.set(entry.inode, shape.id);
-      return shape;
-    });
-    placed.current = shapes.length;
-    if (shapes.length > 0) {
-      editor.createShapes<ItemShape>(shapes);
-      editor.zoomToFit();
+  function deltasFor(editor: Editor, ids: string[]): LayoutDelta[] {
+    const order = editor.getCurrentPageShapesSorted().map((s) => s.id);
+    const out: LayoutDelta[] = [];
+    for (const itemId of ids) {
+      const shape = editor.getShape(shapeIdFor(itemId)) as
+        | ItemShape
+        | undefined;
+      if (!shape) continue;
+      out.push({
+        id: itemId,
+        frame: {
+          x: shape.x,
+          y: shape.y,
+          width: shape.props.w,
+          height: shape.props.h,
+        },
+        rotation: shape.rotation,
+        zIndex: order.indexOf(shape.id),
+      });
     }
-    setStatus(`${entries.length} items`);
+    return out;
   }
 
-  // Watcher → debounced re-list → inode-keyed reconcile. Surviving items keep
-  // their shape (and position); new items append to the grid; missing items
-  // are removed. M2 swaps inodes for sidecar UUIDs and adds tombstones.
+  function scheduleFlush(editor: Editor) {
+    if (flushTimer.current) clearTimeout(flushTimer.current);
+    flushTimer.current = setTimeout(async () => {
+      const ids = [...dirty.current];
+      dirty.current.clear();
+      if (ids.length === 0) return;
+      try {
+        await applyLayout(directoryPath, deltasFor(editor, ids));
+      } catch (e) {
+        setStatus(`layout save failed: ${JSON.stringify(e)}`);
+      }
+    }, 400);
+  }
+
+  async function hydrate(editor: Editor) {
+    hydrating.current = true;
+    try {
+      const items = await openDirectory(directoryPath);
+      const place = makePlacer(items);
+      const unplaced = items.filter((i) => !i.frame);
+      knownIds.current = new Set(items.map((i) => i.id));
+      if (items.length > 0) {
+        editor.createShapes<ItemShape>(items.map((i) => shapeFor(i, place)));
+      }
+      const camera = cameraByDir.get(directoryPath);
+      if (camera) {
+        editor.setCamera(camera);
+      } else {
+        editor.zoomToFit();
+      }
+      setStatus(`${items.length} items`);
+      // First placement of never-placed items is itself layout worth keeping.
+      if (unplaced.length > 0) {
+        await applyLayout(
+          directoryPath,
+          deltasFor(
+            editor,
+            unplaced.map((i) => i.id),
+          ),
+        );
+      }
+    } finally {
+      hydrating.current = false;
+    }
+  }
+
+  /** Reconcile after an external change: update, add, and remove shapes to
+   * match the freshly reconciled item list, preserving arrangement. */
+  async function reconcile(editor: Editor) {
+    const items = await openDirectory(directoryPath);
+    const place = makePlacer(items);
+    const nextIds = new Set(items.map((i) => i.id));
+
+    hydrating.current = true;
+    try {
+      for (const item of items) {
+        const shapeId = shapeIdFor(item.id);
+        const shape = editor.getShape(shapeId) as ItemShape | undefined;
+        if (!shape) {
+          editor.createShapes<ItemShape>([shapeFor(item, place)]);
+          if (!item.frame) {
+            await applyLayout(directoryPath, deltasFor(editor, [item.id]));
+          }
+        } else if (
+          shape.props.path !== item.entry.path ||
+          shape.props.name !== item.entry.name
+        ) {
+          editor.updateShapes<ItemShape>([
+            {
+              id: shapeId,
+              type: "item",
+              props: { name: item.entry.name, path: item.entry.path },
+            },
+          ]);
+        }
+      }
+      for (const known of knownIds.current) {
+        if (!nextIds.has(known)) {
+          editor.deleteShapes([shapeIdFor(known)]);
+        }
+      }
+    } finally {
+      knownIds.current = nextIds;
+      hydrating.current = false;
+    }
+    setStatus(`${items.length} items`);
+  }
+
+  // User interactions → dirty item ids → debounced sidecar flush.
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const unlisten = editor.store.listen(
+      (entry) => {
+        if (hydrating.current) return;
+        const touched = [
+          ...Object.values(entry.changes.added),
+          ...Object.values(entry.changes.updated).map(([, after]) => after),
+        ];
+        let sawItem = false;
+        for (const record of touched) {
+          if (record.typeName === "shape" && record.type === "item") {
+            dirty.current.add(itemIdFor(record.id));
+            sawItem = true;
+          }
+        }
+        if (sawItem) scheduleFlush(editor);
+      },
+      { source: "user", scope: "document" },
+    );
+    return unlisten;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [directoryPath]);
+
+  // External fs events touching this directory → debounced reconcile.
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
-    const unlisten = onFsEvent(() => {
+    const parent = (p: string) => p.slice(0, p.lastIndexOf("/"));
+    const unlisten = onFsEvent((event) => {
+      if (!event.paths.some((p) => parent(p) === directoryPath)) return;
       if (timer) clearTimeout(timer);
-      timer = setTimeout(async () => {
+      timer = setTimeout(() => {
         const editor = editorRef.current;
-        if (!editor) return;
-        const entries = await listDir(directoryPath);
-        const seen = new Set<number>();
-
-        for (const entry of entries) {
-          seen.add(entry.inode);
-          const shapeId = shapeByInode.current.get(entry.inode);
-          if (!shapeId) {
-            const shape = itemShape(entry, placed.current++);
-            shapeByInode.current.set(entry.inode, shape.id);
-            editor.createShapes<ItemShape>([shape]);
-          } else {
-            const shape = editor.getShape(shapeId) as ItemShape | undefined;
-            if (shape && shape.props.path !== entry.path) {
-              editor.updateShapes<ItemShape>([
-                {
-                  id: shapeId,
-                  type: "item",
-                  props: { name: entry.name, path: entry.path },
-                },
-              ]);
-            }
-          }
-        }
-
-        for (const [inode, shapeId] of shapeByInode.current) {
-          if (!seen.has(inode)) {
-            editor.deleteShapes([shapeId]);
-            shapeByInode.current.delete(inode);
-          }
-        }
-        setStatus(`${entries.length} items`);
+        if (editor) reconcile(editor);
       }, 300);
     });
     return () => {
       if (timer) clearTimeout(timer);
       unlisten.then((fn) => fn());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [directoryPath]);
+
+  // Save the viewport when leaving this directory.
+  useEffect(() => {
+    return () => {
+      const editor = editorRef.current;
+      if (editor) cameraByDir.set(directoryPath, editor.getCamera());
     };
   }, [directoryPath]);
 
@@ -127,6 +254,10 @@ export default function CanvasView({
         shapeUtils={shapeUtils}
         onMount={(editor) => {
           editorRef.current = editor;
+          const util = editor.getShapeUtil("item") as ItemShapeUtil;
+          util.onOpen = (shape) => {
+            if (shape.props.kind === "dir") onEnterDirectory(shape.props.path);
+          };
           hydrate(editor);
         }}
       />

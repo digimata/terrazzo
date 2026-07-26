@@ -14,6 +14,7 @@ pub struct FileEntry {
     pub path: String,
     pub name: String,
     pub kind: FileKind,
+    pub device: u64,
     pub inode: u64,
     pub size: u64,
     /// Nanoseconds as a string: JS numbers lose precision past 2^53.
@@ -61,6 +62,7 @@ pub fn entry_for(path: &Path) -> AppResult<FileEntry> {
             classify(path)
         },
         path: path.to_string_lossy().to_string(),
+        device: meta.dev(),
         inode: meta.ino(),
         size: meta.size(),
         mtime_ns: mtime_ns.to_string(),

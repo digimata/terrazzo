@@ -2,7 +2,12 @@
 // One function per Rust command in src-tauri/src/commands.rs.
 
 import { invoke } from "@tauri-apps/api/core";
-import type { FileEntry, WorkspaceInfo } from "./types";
+import type {
+  CanvasItem,
+  FileEntry,
+  LayoutDelta,
+  WorkspaceInfo,
+} from "./types";
 
 /** Select the workspace root: validates, scopes assets, loads or creates
  * `.canvas/workspace.json`, and starts the watcher. */
@@ -14,6 +19,21 @@ export function setWorkspace(path: string): Promise<WorkspaceInfo> {
  * canvas hydrates from. */
 export function listDir(path: string): Promise<FileEntry[]> {
   return invoke("list_dir", { path });
+}
+
+/** Reconcile one directory's listing with its layout sidecar; returns the
+ * canvas items the tldraw store projects. */
+export function openDirectory(path: string): Promise<CanvasItem[]> {
+  return invoke("open_directory", { path });
+}
+
+/** Persist layout deltas for one directory (called after an interaction
+ * ends, never during). */
+export function applyLayout(
+  path: string,
+  deltas: LayoutDelta[],
+): Promise<void> {
+  return invoke("apply_layout", { path, deltas });
 }
 
 /** Re-scan the active workspace. */

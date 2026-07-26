@@ -11,11 +11,39 @@ export interface FileEntry {
   path: string;
   name: string;
   kind: FileKind;
+  device: number;
   inode: number;
   size: number;
   /** Nanoseconds since epoch as a string — exceeds JS safe-integer range. */
   mtimeNs: string;
   isDir: boolean;
+}
+
+/** Mirrors `workspace::layout::Frame` — page-space rect in layout.json. */
+export interface Frame {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Mirrors `workspace::layout::CanvasItem` — one reconciled item from
+ * `open_directory`. `id` is the durable UUIDv7 from the layout sidecar. */
+export interface CanvasItem {
+  id: string;
+  entry: FileEntry;
+  /** Null until the item is first placed and persisted. */
+  frame: Frame | null;
+  rotation: number;
+  zIndex: number;
+}
+
+/** Mirrors `workspace::layout::LayoutDelta` — one item's layout mutation. */
+export interface LayoutDelta {
+  id: string;
+  frame: Frame;
+  rotation: number;
+  zIndex: number;
 }
 
 /** Mirrors `workspace::sidecar::WorkspaceMeta` (`.canvas/workspace.json`). */

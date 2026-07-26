@@ -70,6 +70,14 @@ export const ITEM_H = 120;
 export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   static override type = "item" as const;
 
+  /** Set by CanvasView after mount; fired on double-click (folder entry,
+   * later media/document open). */
+  onOpen?: (shape: ItemShape) => void;
+
+  override onDoubleClick(shape: ItemShape) {
+    this.onOpen?.(shape);
+  }
+
   static override props: RecordProps<ItemShape> = {
     w: T.number,
     h: T.number,
