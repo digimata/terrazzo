@@ -271,12 +271,16 @@ export default function SpikeScreen() {
           seen.add(entry.inode);
           const tracked = itemsByInode.current.get(entry.inode);
           if (tracked && tracked.path !== entry.path) {
+            const asset = editor.getAsset(tracked.assetId);
+            if (!asset) continue;
             editor.updateAssets([
               {
-                id: tracked.assetId,
-                typeName: "asset",
-                type: tracked.kind,
-                props: { src: convertFileSrc(entry.path) },
+                ...asset,
+                props: {
+                  ...asset.props,
+                  src: convertFileSrc(entry.path),
+                  name: entry.name,
+                },
               } as never,
             ]);
             logLine(
