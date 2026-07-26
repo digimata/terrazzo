@@ -1,6 +1,10 @@
+<!-- gh-render:managed -->
+
 # Issues
 
-> Generated from [digimata/terrazzo](https://github.com/digimata/terrazzo/issues). GitHub is canonical. Edit issues there, then run `pnpm issues:pull`.
+> Generated from [digimata/terrazzo](https://github.com/digimata/terrazzo/issues). GitHub is canonical.
+>
+> Selection: state=all; labels=[]; assignee=any; author=any; limit=all; sort=updated; order=desc.
 
 | Issue | State | Labels | Updated |
 | --- | --- | --- | --- |
