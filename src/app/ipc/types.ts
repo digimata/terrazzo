@@ -1,0 +1,39 @@
+// Wire types for the Tauri command boundary. Each mirrors a serde struct in
+// src-tauri (rename_all = "camelCase"); keep the two in sync by hand until
+// codegen is worth it.
+
+/** Mirrors `workspace::scan::FileKind`. */
+export type FileKind = "image" | "video" | "pdf" | "markdown" | "dir" | "other";
+
+/** Mirrors `workspace::scan::FileEntry`. */
+export interface FileEntry {
+  /** Absolute path. Always inside the workspace root. */
+  path: string;
+  name: string;
+  kind: FileKind;
+  inode: number;
+  size: number;
+  /** Nanoseconds since epoch as a string — exceeds JS safe-integer range. */
+  mtimeNs: string;
+  isDir: boolean;
+}
+
+/** Mirrors `error::AppError` — every rejected invoke carries this shape. */
+export interface AppError {
+  code:
+    | "no_workspace"
+    | "not_a_directory"
+    | "path_escape"
+    | "io"
+    | "watcher"
+    | "ffmpeg"
+    | "bad_filename";
+  message: string;
+}
+
+/** Payload of the `fs-event` Tauri event (see `workspace::watch`). */
+export interface FsEvent {
+  /** Debug-formatted notify::EventKind. Spike-grade; will become an enum. */
+  kind: string;
+  paths: string[];
+}
