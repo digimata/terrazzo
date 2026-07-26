@@ -1,12 +1,15 @@
 import { useState } from "react";
 import type { AppMode } from "./mode";
 import type { WorkspaceInfo } from "./ipc/types";
+import { useEscapeOwnedByApp } from "./hooks/keyboard";
 import StartScreen from "./StartScreen";
 import CanvasView from "../canvas/CanvasView";
+import MediaView from "../media/MediaView";
 import "./app.css";
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>({ type: "start" });
+  useEscapeOwnedByApp();
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
   const [back, setBack] = useState<string[]>([]);
   const [forward, setForward] = useState<string[]>([]);
@@ -43,6 +46,18 @@ export default function App() {
           setWorkspace(info);
           setMode({ type: "canvas", directoryPath: info.root });
         }}
+      />
+    );
+  }
+
+  if (mode.type === "media") {
+    return (
+      <MediaView
+        directoryPath={mode.directoryPath}
+        itemId={mode.itemId}
+        onClose={() =>
+          setMode({ type: "canvas", directoryPath: mode.directoryPath })
+        }
       />
     );
   }
@@ -97,6 +112,13 @@ export default function App() {
             key={mode.directoryPath}
             directoryPath={mode.directoryPath}
             onEnterDirectory={navigate}
+            onOpenItem={(itemId) =>
+              setMode({
+                type: "media",
+                itemId,
+                directoryPath: mode.directoryPath,
+              })
+            }
           />
         </div>
       </div>

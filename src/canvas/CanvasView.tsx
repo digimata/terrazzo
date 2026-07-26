@@ -84,9 +84,11 @@ function shapeFor(item: CanvasItem, place: () => { x: number; y: number }) {
 export default function CanvasView({
   directoryPath,
   onEnterDirectory,
+  onOpenItem,
 }: {
   directoryPath: string;
   onEnterDirectory: (path: string) => void;
+  onOpenItem: (itemId: string) => void;
 }) {
   const editorRef = useRef<Editor | null>(null);
   const knownIds = useRef<Set<string>>(new Set());
@@ -307,7 +309,14 @@ export default function CanvasView({
           editorRef.current = editor;
           const util = editor.getShapeUtil("item") as ItemShapeUtil;
           util.onOpen = (shape) => {
-            if (shape.props.kind === "dir") onEnterDirectory(shape.props.path);
+            if (shape.props.kind === "dir") {
+              onEnterDirectory(shape.props.path);
+            } else if (
+              shape.props.kind === "image" ||
+              shape.props.kind === "video"
+            ) {
+              onOpenItem(itemIdFor(shape.id));
+            }
           };
           hydrate(editor);
         }}

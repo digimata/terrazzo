@@ -1,0 +1,53 @@
+.media-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  background: #101014;
+  z-index: 100;
+}
+
+.media-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  min-width: 0;
+}
+
+.media-asset {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 4px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+.media-rail {
+  width: 240px;
+  padding: 48px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border-left: 1px solid #1e1e26;
+}
+
+.media-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.media-label {
+  font: 600 9px/1 ui-monospace, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #565f6e;
+}
+
+.media-value {
+  font: 500 11px/1.5 ui-monospace, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c8ccd4;
+  word-break: break-all;
+}

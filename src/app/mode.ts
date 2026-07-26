@@ -6,4 +6,4 @@ export type AppMode =
   | { type: "start" } // no workspace selected yet
   | { type: "canvas"; directoryPath: string }
   | { type: "document"; itemId: string; view: "writing" | "source" }
-  | { type: "media"; itemId: string };
+  | { type: "media"; itemId: string; directoryPath: string };
