@@ -177,13 +177,19 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     this.onOpen?.(shape);
   }
 
-  /** Notes and folders open on a single click (Spatial's pattern) — they're
-   * doors, not objects you select. Media keeps click-to-select,
-   * double-click-to-open. Drags still move the card: tldraw only fires
-   * onClick when the pointer never left the click threshold. */
+  /** Every openable card opens on a single click (Spatial's pattern) —
+   * folders and notes are doors, images and videos jump to the focus view
+   * (TRZ-0013). Drags still move the card: tldraw only fires onClick when
+   * the pointer never left the click threshold. Modifier-clicks are left to
+   * tldraw's selection semantics (shift extends, etc.) so media can still be
+   * selected without a marquee. */
   override onClick(shape: ItemShape) {
     const kind = shape.props.kind;
-    if (kind === "markdown" || kind === "dir") this.onOpen?.(shape);
+    if (kind === "pdf" || kind === "other") return;
+    const inputs = this.editor.inputs;
+    if (inputs.getShiftKey() || inputs.getAltKey() || inputs.getCtrlKey())
+      return;
+    this.onOpen?.(shape);
   }
 
   static override props: RecordProps<ItemShape> = {
