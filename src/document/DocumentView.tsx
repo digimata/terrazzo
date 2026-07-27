@@ -60,7 +60,7 @@ const theme = EditorView.theme(
       fontSize: "14px",
       // SF Pro is variable — intermediate weights render for real. A hair
       // under regular reads lighter on the dark field without going thin.
-      fontWeight: "390",
+      fontWeight: "380",
     },
     ".cm-content": {
       fontFamily: "-apple-system, 'SF Pro Text', system-ui, sans-serif",

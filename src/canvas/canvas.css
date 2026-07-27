@@ -24,10 +24,11 @@
   background: #171719;
   color: #e6e9ef;
   font:
-    11px/1.8 -apple-system,
+    10px/1.8 -apple-system,
     "SF Pro Text",
     system-ui,
     sans-serif;
+  font-weight: 380; /* match the document editor's prose */
   overflow: hidden;
   pointer-events: none;
   user-select: none;
@@ -48,19 +49,23 @@
 
 .note-card h2 {
   font-size: 1.15em;
-  margin-top: 1.2em;
+  margin-top: 1.6em;
 }
 
 .note-card h3,
 .note-card h4 {
   font-size: 1em;
-  margin-top: 1em;
+  margin-top: 1.4em;
 }
 
 .note-card p,
 .note-card ul,
 .note-card ol {
-  margin: 0 0 0.8em;
+  margin: 0 0 1.1em;
+}
+
+.note-card li {
+  margin-bottom: 0.35em;
 }
 
 .note-card ul,
