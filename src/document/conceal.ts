@@ -122,6 +122,46 @@ export const blockquoteLines = ViewPlugin.fromClass(
   { decorations: (v) => v.decorations },
 );
 
+const hrLine = Decoration.line({ class: "cm-hr" });
+
+function buildHr(view: EditorView): DecorationSet {
+  const ranges: Range<Decoration>[] = [];
+  const state = view.state;
+  const sel = state.selection.main;
+  for (const { from, to } of view.visibleRanges) {
+    syntaxTree(state).iterate({
+      from,
+      to,
+      enter: (node) => {
+        if (node.name !== "HorizontalRule") return;
+        const line = state.doc.lineAt(node.from);
+        // Selection on the line reveals the raw --- for editing.
+        if (sel.from <= line.to && sel.to >= line.from) return;
+        ranges.push(hrLine.range(line.from));
+      },
+    });
+  }
+  return Decoration.set(ranges, true);
+}
+
+/** Thematic breaks render as an actual rule in the writing view: the ---
+ * text goes transparent (keeping the line's height and caret behavior) and
+ * the theme draws a centered border via ::after. */
+export const hrLines = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+      this.decorations = buildHr(view);
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.selectionSet || update.viewportChanged) {
+        this.decorations = buildHr(update.view);
+      }
+    }
+  },
+  { decorations: (v) => v.decorations },
+);
+
 export const conceal = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;

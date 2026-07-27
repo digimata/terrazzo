@@ -39,7 +39,7 @@ import {
 } from "../app/ipc/commands";
 import type { FsEvent } from "../app/ipc/types";
 import { useKeymap } from "../app/hooks/keyboard";
-import { blockquoteLines, conceal } from "./conceal";
+import { blockquoteLines, conceal, hrLines } from "./conceal";
 import "./document.css";
 
 export type DocumentViewMode = "writing" | "source";
@@ -57,7 +57,7 @@ const theme = EditorView.theme(
       backgroundColor: "#101011", // match tldraw dark canvas
       color: "#e6e9ef",
       height: "100%",
-      fontSize: "14px",
+      fontSize: "14.5px",
       // SF Pro is variable — intermediate weights render for real. A hair
       // under regular reads lighter on the dark field without going thin.
       fontWeight: "380",
@@ -103,6 +103,17 @@ const theme = EditorView.theme(
     },
     ".cm-blockquote-first::before": { top: "4px" },
     ".cm-blockquote-last::before": { bottom: "4px" },
+    // Thematic break at rest: text transparent (line height and caret
+    // stay honest), the rule drawn centered by the pseudo-element.
+    ".cm-hr": { color: "transparent", position: "relative" },
+    ".cm-hr::after": {
+      content: '""',
+      position: "absolute",
+      left: "4px",
+      right: "4px",
+      top: "50%",
+      borderTop: "1px solid #33363a",
+    },
   },
   { dark: true },
 );
@@ -373,7 +384,7 @@ export default function DocumentView({
             EditorView.lineWrapping,
             theme,
             concealCompartment.current.of(
-              viewModeRef.current === "writing" ? conceal : [],
+              viewModeRef.current === "writing" ? [conceal, hrLines] : [],
             ),
             EditorView.updateListener.of((update) => {
               if (!update.docChanged || applyingExternal || !view) return;
@@ -420,7 +431,7 @@ export default function DocumentView({
   useEffect(() => {
     editorRef.current?.dispatch({
       effects: concealCompartment.current.reconfigure(
-        viewMode === "writing" ? conceal : [],
+        viewMode === "writing" ? [conceal, hrLines] : [],
       ),
     });
   }, [viewMode]);
