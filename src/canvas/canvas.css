@@ -154,3 +154,21 @@
 .canvas-root .card-grow:hover {
   transform: scale(var(--grow-scale, 1.015));
 }
+
+/* tldraw's context menu (right click), restyled to the note-card palette.
+ * Menus portal outside .canvas-root, so the selectors are global. */
+.tlui-menu {
+  background: #171719;
+  border: 1px solid #1d1d20;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.tlui-menu .tlui-button {
+  color: #b6bac2;
+}
+
+.tlui-menu .tlui-button:hover:not(:disabled) {
+  background: #232729;
+  color: #ffffff;
+}

@@ -112,8 +112,8 @@ body,
   z-index: 30;
   min-width: 300px;
   padding: 10px;
-  background: #1c1c23;
-  border: 1px solid #2b2e2f;
+  background: #171719; /* note-card palette */
+  border: 1px solid #1d1d20;
   border-radius: 20px;
   display: flex;
   flex-direction: column;
