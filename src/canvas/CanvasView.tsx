@@ -27,7 +27,6 @@ import type { CanvasItem, FileKind, LayoutDelta } from "../app/ipc/types";
 import {
   ITEM_H,
   ITEM_W,
-  NOTE_CARD_H,
   ItemShape,
   ItemShapeUtil,
   fixedSize,
@@ -48,6 +47,7 @@ const components = {
   NavigationPanel: null, // zoom controls + minimap cluster, bottom left
   MenuPanel: null, // hamburger + page menu, top left — ours below instead
   InFrontOfTheCanvas: SelectionDimensions, // Figma's W × H pill
+  HoveredShapeIndicator: null, // cards grow on hover instead of a blue ring
 };
 
 const GAP = 32;
@@ -78,16 +78,20 @@ function makePlacer(items: CanvasItem[]) {
     framed.length === 0
       ? 0
       : Math.max(...framed.map((i) => i.frame!.y + i.frame!.height)) + GAP;
-  // Rows must clear the tallest default card, or first placement of a
-  // directory with notes stacks portrait cards into the row below.
-  const rowH = items.some(
-    (i) => !i.frame && i.entry.kind === "markdown",
-  )
-    ? NOTE_CARD_H
-    : ITEM_H;
+  // Cells must clear the largest default card among the unplaced items, or
+  // first placement of a directory with notes/folders overlaps neighbors.
+  const unplaced = items.filter((i) => !i.frame);
+  const colW = Math.max(
+    ITEM_W,
+    ...unplaced.map((i) => fixedSize(i.entry.kind)?.width ?? ITEM_W),
+  );
+  const rowH = Math.max(
+    ITEM_H,
+    ...unplaced.map((i) => fixedSize(i.entry.kind)?.height ?? ITEM_H),
+  );
   let slot = 0;
   return () => ({
-    x: (slot % COLS) * (ITEM_W + GAP),
+    x: (slot % COLS) * (colW + GAP),
     y: baseY + Math.floor(slot++ / COLS) * (rowH + GAP),
   });
 }

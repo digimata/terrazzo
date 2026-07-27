@@ -141,3 +141,16 @@
   --tl-cursor-grab: var(--cursor-arrow);
   --tl-cursor-grabbing: var(--cursor-arrow);
 }
+
+/* Hover affordance on folder and note cards: a quiet grow instead of the
+ * blue hover ring (HoveredShapeIndicator is disabled). Plain CSS transform
+ * on the card's own container — tldraw positions the shape's parent, so
+ * scaling here never fights the canvas transform. */
+.canvas-root .card-grow {
+  transition: transform 160ms ease-out;
+  transform-origin: center center; /* tldraw's container defaults top-left */
+}
+
+.canvas-root .card-grow:hover {
+  transform: scale(1.03);
+}

@@ -21,19 +21,20 @@ import type { FileKind } from "../../app/ipc/types";
 
 /** Folder card (Spatial's look): the folder IS the card — a back panel's
  * tab peeks above a full-width front panel, item count + name inside the
- * front, bottom-left. Drawn at the fixed 180×120 dir frame. */
+ * front, bottom-left. Drawn at the fixed dir frame — folders read close to
+ * a note card's height and roughly 1.5× its width. */
 function FolderCard({ name, count }: { name: string; count: number }) {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <svg
-        width="180"
-        height="120"
-        viewBox="0 0 180 120"
+        width={DIR_W}
+        height={DIR_H}
+        viewBox={`0 0 ${DIR_W} ${DIR_H}`}
         fill="none"
         style={{ position: "absolute", inset: 0 }}
       >
         <path
-          d="M6 44 V13 a7 7 0 0 1 7 -7 h53 a8 8 0 0 1 6 2.7 l5.6 6.3 a6 6 0 0 0 4.5 2 H167 a7 7 0 0 1 7 7 v20 H6 Z"
+          d="M12 80 V30 a14 14 0 0 1 14 -14 h108 a16 16 0 0 1 12.2 5.6 l11 12.4 a12 12 0 0 0 9.2 4 H354 a14 14 0 0 1 14 14 v28 H12 Z"
           fill="#1d2123"
           stroke="#2b2e2f"
           strokeWidth="1"
@@ -44,21 +45,21 @@ function FolderCard({ name, count }: { name: string; count: number }) {
           position: "absolute",
           left: 0,
           right: 0,
-          top: 16,
+          top: 44,
           bottom: 0,
           background: "#232729",
           border: "1px solid #2b2e2f",
-          borderRadius: 12,
+          borderRadius: 20,
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
-          padding: "12px 14px",
+          padding: "22px 26px",
           overflow: "hidden",
         }}
       >
         <span
           style={{
-            font: "500 10px/1.3 -apple-system, 'SF Pro Text', system-ui, sans-serif",
+            font: "500 15px/1.5 -apple-system, 'SF Pro Text', system-ui, sans-serif",
             color: "#8a8f98",
           }}
         >
@@ -66,7 +67,7 @@ function FolderCard({ name, count }: { name: string; count: number }) {
         </span>
         <span
           style={{
-            font: "600 12px/1.4 -apple-system, 'SF Pro Text', system-ui, sans-serif",
+            font: "600 18px/1.5 -apple-system, 'SF Pro Text', system-ui, sans-serif",
             color: "#e6e9ef",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -144,11 +145,15 @@ export const NOTE_W = 440;
  * Notes and folders are not resizable — one canonical card size each. */
 export const NOTE_CARD_W = 260;
 export const NOTE_CARD_H = 364;
+/** Fixed folder frame (Spatial's proportions: near note height, ~1.5× its
+ * width — folders should read bigger than notes, not smaller). */
+export const DIR_W = 380;
+export const DIR_H = 300;
 
 /** Fixed frame for the kind, or null if the kind is freely resizable. */
 export function fixedSize(kind: FileKind) {
   if (kind === "markdown") return { width: NOTE_CARD_W, height: NOTE_CARD_H };
-  if (kind === "dir") return { width: ITEM_W, height: ITEM_H };
+  if (kind === "dir") return { width: DIR_W, height: DIR_H };
   return null;
 }
 
@@ -267,7 +272,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
 
     if (kind === "dir") {
       return (
-        <HTMLContainer style={{ pointerEvents: "all" }}>
+        <HTMLContainer className="card-grow" style={{ pointerEvents: "all" }}>
           <FolderCard name={name} count={shape.props.childCount} />
         </HTMLContainer>
       );
@@ -280,6 +285,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       const scale = shape.props.w / NOTE_W;
       return (
         <HTMLContainer
+          className="card-grow"
           style={{
             overflow: "hidden",
             borderRadius: 24, // Spatial's soft card corner — notes only
