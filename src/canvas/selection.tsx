@@ -17,24 +17,31 @@ import {
   useValue,
 } from "tldraw";
 
+/** True when every selected shape is a door (folder or note): fixed-size,
+ * opens on click, shows the silhouette ring instead of selection furniture. */
+function doorsOnlySelection(editor: {
+  getSelectedShapes(): { type: string; props: object }[];
+}) {
+  const selected = editor.getSelectedShapes();
+  return (
+    selected.length > 0 &&
+    selected.every(
+      (s) =>
+        s.type === "item" &&
+        ((s.props as { kind: string }).kind === "dir" ||
+          (s.props as { kind: string }).kind === "markdown"),
+    )
+  );
+}
+
 export class FigmaSelectionForeground extends SelectionForegroundOverlayUtil {
-  /** No selection box or handles when the selection is all doors (folders,
-   * notes): they're fixed-size, and post-drag they show the white silhouette
-   * ring instead (Spatial's pattern). Mixed selections keep the box. */
-  override getOverlays() {
-    const selected = this.editor.getSelectedShapes();
-    if (
-      selected.length > 0 &&
-      selected.every(
-        (s) =>
-          s.type === "item" &&
-          ((s.props as { kind: string }).kind === "dir" ||
-            (s.props as { kind: string }).kind === "markdown"),
-      )
-    ) {
-      return [];
-    }
-    return super.getOverlays();
+  /** No selection box or handles when the selection is all doors — post-drag
+   * they show the white silhouette ring instead (Spatial's pattern). isActive
+   * is the gate: render draws the box from selection state directly, ignoring
+   * getOverlays, so filtering overlays alone leaves the box behind. */
+  override isActive() {
+    if (doorsOnlySelection(this.editor)) return false;
+    return super.isActive();
   }
 }
 
@@ -170,6 +177,7 @@ export function SelectionDimensions() {
   const info = useValue(
     "selection-dimensions",
     () => {
+      if (doorsOnlySelection(editor)) return null; // silhouette ring only
       const screen = editor.getSelectionRotatedScreenBounds();
       const page = editor.getSelectionRotatedPageBounds();
       if (!screen || !page) return null;
