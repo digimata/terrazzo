@@ -168,12 +168,13 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     this.onOpen?.(shape);
   }
 
-  /** Notes open on a single click (Spatial's pattern) — a note card is a
-   * door, not an object you select. Everything else keeps click-to-select,
-   * double-click-to-open. Drags still move the note: tldraw only fires
+  /** Notes and folders open on a single click (Spatial's pattern) — they're
+   * doors, not objects you select. Media keeps click-to-select,
+   * double-click-to-open. Drags still move the card: tldraw only fires
    * onClick when the pointer never left the click threshold. */
   override onClick(shape: ItemShape) {
-    if (shape.props.kind === "markdown") this.onOpen?.(shape);
+    const kind = shape.props.kind;
+    if (kind === "markdown" || kind === "dir") this.onOpen?.(shape);
   }
 
   static override props: RecordProps<ItemShape> = {
@@ -218,7 +219,8 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
    * corners). Notes get none at all — a single click opens them, so a
    * selection ring would only flash before the document covers it. */
   override indicator(shape: ItemShape) {
-    if (shape.props.kind === "markdown") return null;
+    const kind = shape.props.kind;
+    if (kind === "markdown" || kind === "dir") return null;
     return <rect width={shape.props.w} height={shape.props.h} />;
   }
 
@@ -388,11 +390,12 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   }
 
   /** Canvas-overlay ring (v5 strokes this, not the React indicator): square
-   * corners to match the cards, and nothing for notes — a single click opens
-   * them, so a ring would only flash before the document covers it. */
+   * corners to match the cards, and nothing for notes or folders — a single
+   * click opens them, so a ring would only flash before the view covers it. */
   override getIndicatorPath(shape: ItemShape) {
     const path = new Path2D();
-    if (shape.props.kind === "markdown") return path;
+    const kind = shape.props.kind;
+    if (kind === "markdown" || kind === "dir") return path;
     path.rect(0, 0, shape.props.w, shape.props.h);
     return path;
   }
