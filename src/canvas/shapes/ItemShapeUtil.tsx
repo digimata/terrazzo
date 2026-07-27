@@ -35,8 +35,8 @@ function FolderCard({ name, count }: { name: string; count: number }) {
       >
         <path
           d="M0 80 V18 a14 14 0 0 1 14 -14 h76 a24 24 0 0 1 18 8 l12 17 a18 18 0 0 0 13 7 H300 a40 40 0 0 1 40 40 v4 H0 Z"
-          fill="#171b1d"
-          stroke="#242728"
+          fill="#141719"
+          stroke="#212425"
           strokeWidth="1"
         />
       </svg>
@@ -47,8 +47,8 @@ function FolderCard({ name, count }: { name: string; count: number }) {
           right: 0,
           top: 44,
           bottom: 0,
-          background: "#1c2022",
-          border: "1px solid #242728",
+          background: "#181c1e",
+          border: "1px solid #212425",
           borderRadius: 22,
           display: "flex",
           flexDirection: "column",
