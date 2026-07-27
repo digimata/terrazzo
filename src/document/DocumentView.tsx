@@ -54,7 +54,7 @@ type Conflict = "changed" | "deleted";
 const theme = EditorView.theme(
   {
     "&": {
-      backgroundColor: "#16161c",
+      backgroundColor: "#101011", // match tldraw dark canvas
       color: "#e6e9ef",
       height: "100%",
       fontSize: "15px",
