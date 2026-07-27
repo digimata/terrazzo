@@ -333,17 +333,28 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
             <span
               style={{
                 position: "absolute",
-                top: 8,
-                left: 8,
-                padding: "3px 6px",
-                borderRadius: 4,
-                background: "rgba(16, 16, 20, 0.7)",
-                font: "600 9px/1 ui-monospace, monospace",
-                letterSpacing: "0.08em",
-                color: "#e6e9ef",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              VID
+              <span
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: "rgba(16, 16, 20, 0.55)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16">
+                  {/* nudged right of center — optical centering for a triangle */}
+                  <path d="M5.5 3.5 L12.5 8 L5.5 12.5 Z" fill="#ffffff" />
+                </svg>
+              </span>
             </span>
           )}
         </HTMLContainer>
