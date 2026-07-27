@@ -130,7 +130,7 @@ body,
   background: transparent;
   color: #71767f;
   font: 500 14px/1 -apple-system, "SF Pro Text", system-ui, sans-serif;
-  cursor: pointer;
+  cursor: var(--cursor-arrow);
   text-align: left;
 }
 
