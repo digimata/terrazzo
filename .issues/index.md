@@ -6,7 +6,7 @@
 >
 > Selection: state=all; labels=[]; assignee=any; author=any; limit=all; sort=updated; order=desc.
 >
-> Data as of: 2026-07-26T19:37:25Z.
+> Data as of: 2026-07-27T02:39:36Z.
 
 | Issue | State | Labels | Updated |
 | --- | --- | --- | --- |
@@ -17,3 +17,4 @@
 | [ISS-0005 — Give asset-protocol access an active-workspace lifecycle](iss-0005.md) | open | — | 2026-07-26 |
 | [ISS-0006 — Reduce Tauri capabilities to least privilege](iss-0006.md) | open | — | 2026-07-26 |
 | [ISS-0007 — Make file imports atomically non-overwriting](iss-0007.md) | open | — | 2026-07-26 |
+| [ISS-0008 — Canvas pans at 40–50fps with 200 items — needs viewport culling to hit the PR-021 60fps floor](iss-0008.md) | open | — | 2026-07-27 |
