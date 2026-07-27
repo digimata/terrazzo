@@ -37,6 +37,7 @@ const shapeUtils = [ItemShapeUtil];
 // replaces each piece (v0: the canvas is ours, the library is invisible).
 const components = {
   StylePanel: null,
+  Toolbar: null,
 };
 
 const GAP = 32;
