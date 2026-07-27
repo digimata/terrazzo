@@ -305,7 +305,9 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       );
     }
 
-    if (kind === "markdown" && note) {
+    // Note chrome regardless of preview state — an empty or not-yet-rendered
+    // note is a blank note card, never the generic kind-badge card.
+    if (kind === "markdown") {
       // Rendered at a fixed design width and scaled to the frame, so the
       // typography holds its proportions at any card size (Spatial's note
       // cards). Content is inert — pointer events stay with the shape.
