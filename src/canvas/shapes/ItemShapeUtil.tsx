@@ -34,7 +34,7 @@ function FolderCard({ name, count }: { name: string; count: number }) {
         style={{ position: "absolute", inset: 0 }}
       >
         <path
-          d="M12 80 V30 a14 14 0 0 1 14 -14 h96 a16 16 0 0 1 12.2 5.6 l11 12.4 a12 12 0 0 0 9.2 4 H314 a14 14 0 0 1 14 14 v28 H12 Z"
+          d="M12 80 V30 a14 14 0 0 1 14 -14 h96 a16 16 0 0 1 12.2 5.6 l11 12.4 a12 12 0 0 0 9.2 4 H300 a14 14 0 0 1 14 14 v28 H12 Z"
           fill="#1d2123"
           stroke="#2b2e2f"
           strokeWidth="1"
@@ -390,12 +390,24 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   }
 
   /** Canvas-overlay ring (v5 strokes this, not the React indicator): square
-   * corners to match the cards, and nothing for notes or folders — a single
-   * click opens them, so a ring would only flash before the view covers it. */
+   * corners to match media cards, nothing for notes (a click opens them),
+   * and the folder's exact silhouette — tab, step, rounded body — for dirs,
+   * so the post-drag selected state hugs the card like Spatial's. The path
+   * is the outer union of FolderCard's back tab and front panel; the tab's
+   * left edge meets the front's top-left corner arc at (12, 48.1), and the
+   * back's right corner arc meets the straight top edge at (311.5, 44). */
   override getIndicatorPath(shape: ItemShape) {
-    const path = new Path2D();
     const kind = shape.props.kind;
-    if (kind === "markdown" || kind === "dir") return path;
+    if (kind === "markdown") return new Path2D();
+    if (kind === "dir") {
+      return new Path2D(
+        "M12 48.1 V30 a14 14 0 0 1 14 -14 h96 a16 16 0 0 1 12.2 5.6 " +
+          "l11 12.4 a12 12 0 0 0 9.2 4 H300 a14 14 0 0 1 11.5 6 L314 44 " +
+          "a26 26 0 0 1 26 26 V244 a26 26 0 0 1 -26 26 H26 " +
+          "a26 26 0 0 1 -26 -26 V70 a26 26 0 0 1 12 -21.9 Z",
+      );
+    }
+    const path = new Path2D();
     path.rect(0, 0, shape.props.w, shape.props.h);
     return path;
   }

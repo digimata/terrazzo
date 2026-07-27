@@ -12,15 +12,37 @@ import {
   SelectionForegroundOverlayUtil,
   ShapeIndicatorOverlayUtil,
   SnapIndicatorOverlayUtil,
+  strokeShapeIndicators,
   useEditor,
   useValue,
 } from "tldraw";
 
-export class FigmaSelectionForeground extends SelectionForegroundOverlayUtil {}
+export class FigmaSelectionForeground extends SelectionForegroundOverlayUtil {
+  /** No selection box or handles when the selection is all doors (folders,
+   * notes): they're fixed-size, and post-drag they show the white silhouette
+   * ring instead (Spatial's pattern). Mixed selections keep the box. */
+  override getOverlays() {
+    const selected = this.editor.getSelectedShapes();
+    if (
+      selected.length > 0 &&
+      selected.every(
+        (s) =>
+          s.type === "item" &&
+          ((s.props as { kind: string }).kind === "dir" ||
+            (s.props as { kind: string }).kind === "markdown"),
+      )
+    ) {
+      return [];
+    }
+    return super.getOverlays();
+  }
+}
 
 /** The blue ring on hover is also canvas-overlay work (ShapeIndicatorOverlayUtil
  * strokes selected + hovered shapes alike). Cards grow on hover instead, so
- * this subclass drops the hovered id and keeps the ring for selection only. */
+ * this subclass drops the hovered id and keeps the ring for selection only.
+ * Render is ours too: folders stroke white along their silhouette (Spatial's
+ * post-drag state), everything else in the selection blue. */
 export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
   override getOverlays() {
     const overlays = super.getOverlays();
@@ -41,6 +63,50 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
       }
     }
     return overlays;
+  }
+
+  override render(
+    ctx: CanvasRenderingContext2D,
+    overlays: ReturnType<ShapeIndicatorOverlayUtil["getOverlays"]>,
+  ) {
+    const overlay = overlays[0] as
+      | { props: { idsToDisplay: string[]; hintingShapeIds: string[] } }
+      | undefined;
+    if (!overlay) return;
+    const editor = this.editor;
+    const zoom = editor.getZoomLevel();
+    const dirs: string[] = [];
+    const rest: string[] = [];
+    for (const id of overlay.props.idsToDisplay) {
+      const shape = editor.getShape(id as Parameters<typeof editor.getShape>[0]);
+      if (shape?.type === "item" && (shape.props as { kind: string }).kind === "dir") {
+        dirs.push(id);
+      } else {
+        rest.push(id);
+      }
+    }
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    const strokeIds = strokeShapeIndicators as (
+      editor: typeof this.editor,
+      ctx: CanvasRenderingContext2D,
+      ids: string[],
+    ) => void;
+    if (rest.length > 0) {
+      ctx.strokeStyle = "#3ba3ff";
+      ctx.lineWidth = this.options.lineWidth / zoom;
+      strokeIds(editor, ctx, rest);
+    }
+    if (dirs.length > 0) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2 / zoom;
+      strokeIds(editor, ctx, dirs);
+    }
+    if (overlay.props.hintingShapeIds.length > 0) {
+      ctx.strokeStyle = "#3ba3ff";
+      ctx.lineWidth = this.options.hintedLineWidth / zoom;
+      strokeIds(editor, ctx, overlay.props.hintingShapeIds);
+    }
   }
 }
 
