@@ -100,6 +100,14 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     this.onOpen?.(shape);
   }
 
+  /** Notes open on a single click (Spatial's pattern) — a note card is a
+   * door, not an object you select. Everything else keeps click-to-select,
+   * double-click-to-open. Drags still move the note: tldraw only fires
+   * onClick when the pointer never left the click threshold. */
+  override onClick(shape: ItemShape) {
+    if (shape.props.kind === "markdown") this.onOpen?.(shape);
+  }
+
   static override props: RecordProps<ItemShape> = {
     w: T.number,
     h: T.number,
@@ -136,16 +144,12 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     return fixedSize(shape.props.kind) === null;
   }
 
-  /** Selection outline follows the card's corner radius (the default rect
-   * cuts straight across a note's rounded corners). */
+  /** Square selection outline (tldraw's v5 default indicator rounds its
+   * corners). Notes get none at all — a single click opens them, so a
+   * selection ring would only flash before the document covers it. */
   override indicator(shape: ItemShape) {
-    return (
-      <rect
-        width={shape.props.w}
-        height={shape.props.h}
-        rx={shape.props.kind === "markdown" ? 24 : 0}
-      />
-    );
+    if (shape.props.kind === "markdown") return null;
+    return <rect width={shape.props.w} height={shape.props.h} />;
   }
 
   override onResize(shape: ItemShape, info: TLResizeInfo<ItemShape>) {
