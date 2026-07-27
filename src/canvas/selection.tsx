@@ -52,7 +52,21 @@ export class FigmaSelectionForeground extends SelectionForegroundOverlayUtil {
  * post-drag state), everything else in the selection blue. */
 export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
   override getOverlays() {
-    const overlays = super.getOverlays();
+    let overlays = super.getOverlays();
+    // The stock util hides indicators while translating (drag states aren't
+    // in its allow-list); we keep the selection ring up during the drag.
+    if (overlays.length === 0 && this.editor.isIn("select.translating")) {
+      const ids = this.editor.getSelectedShapeIds();
+      if (ids.length > 0) {
+        overlays = [
+          {
+            id: "shape_indicator",
+            type: "shape_indicator",
+            props: { idsToDisplay: [...ids], hintingShapeIds: [] },
+          },
+        ] as ReturnType<ShapeIndicatorOverlayUtil["getOverlays"]>;
+      }
+    }
     const overlay = overlays[0] as
       | { props: { idsToDisplay: string[]; hintingShapeIds: string[] } }
       | undefined;
