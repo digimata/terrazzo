@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { EditorView, keymap } from "@codemirror/view";
-import { EditorState } from "@codemirror/state";
+import { Compartment, EditorState } from "@codemirror/state";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import {
   defaultKeymap,
@@ -21,7 +21,10 @@ import { syntaxHighlighting, HighlightStyle } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import { openDirectory, readTextFile, writeTextFile } from "../app/ipc/commands";
 import { useKeymap } from "../app/hooks/keyboard";
+import { conceal } from "./conceal";
 import "./document.css";
+
+export type DocumentViewMode = "writing" | "source";
 
 const SAVE_DEBOUNCE_MS = 1000;
 
@@ -52,6 +55,10 @@ const theme = EditorView.theme(
 
 const highlight = HighlightStyle.define([
   { tag: tags.heading, color: "#7aa2f7", fontWeight: "600" },
+  { tag: tags.heading1, fontSize: "1.5em", color: "#7aa2f7", fontWeight: "600" },
+  { tag: tags.heading2, fontSize: "1.25em", color: "#7aa2f7", fontWeight: "600" },
+  { tag: tags.heading3, fontSize: "1.1em", color: "#7aa2f7", fontWeight: "600" },
+  { tag: tags.strikethrough, textDecoration: "line-through", color: "#565f89" },
   { tag: tags.strong, color: "#e6e9ef", fontWeight: "600" },
   { tag: tags.emphasis, color: "#e6e9ef", fontStyle: "italic" },
   { tag: tags.link, color: "#9ece6a" },
@@ -65,17 +72,32 @@ const highlight = HighlightStyle.define([
 export default function DocumentView({
   directoryPath,
   itemId,
+  view: viewMode,
+  onChangeView,
   onClose,
 }: {
   directoryPath: string;
   itemId: string;
+  view: DocumentViewMode;
+  onChangeView: (view: DocumentViewMode) => void;
   onClose: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<EditorView | null>(null);
+  const concealCompartment = useRef(new Compartment());
   const [name, setName] = useState("");
   const [saveState, setSaveState] = useState<"clean" | "dirty" | "saving">(
     "clean",
   );
+
+  // cmd+E toggles writing/source. Bound inside CodeMirror (not useKeymap):
+  // the app dispatcher deliberately lets everything but Escape through to
+  // editable targets, so an app-level binding would never fire while typing.
+  // Refs keep the CM binding's closure fresh across renders.
+  const viewModeRef = useRef(viewMode);
+  viewModeRef.current = viewMode;
+  const onChangeViewRef = useRef(onChangeView);
+  onChangeViewRef.current = onChangeView;
 
   useEffect(() => {
     let view: EditorView | null = null;
@@ -126,17 +148,34 @@ export default function DocumentView({
           doc: contents,
           extensions: [
             history(),
-            keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+            keymap.of([
+              {
+                key: "Mod-e",
+                run: () => {
+                  onChangeViewRef.current(
+                    viewModeRef.current === "writing" ? "source" : "writing",
+                  );
+                  return true;
+                },
+              },
+              ...defaultKeymap,
+              ...historyKeymap,
+              indentWithTab,
+            ]),
             markdown({ base: markdownLanguage }),
             syntaxHighlighting(highlight),
             EditorView.lineWrapping,
             theme,
+            concealCompartment.current.of(
+              viewModeRef.current === "writing" ? conceal : [],
+            ),
             EditorView.updateListener.of((update) => {
               if (update.docChanged && view) scheduleSave(view);
             }),
           ],
         }),
       });
+      editorRef.current = view;
       view.focus();
     })();
 
@@ -147,8 +186,19 @@ export default function DocumentView({
       // forget — the atomic write can outlive the component safely.
       if (view && dirty) void writeTextFile(path, view.state.doc.toString());
       view?.destroy();
+      editorRef.current = null;
     };
   }, [directoryPath, itemId, onClose]);
+
+  // Swap the concealment in and out when the view mode flips; the editor
+  // itself (buffer, undo history, cursor) survives the toggle.
+  useEffect(() => {
+    editorRef.current?.dispatch({
+      effects: concealCompartment.current.reconfigure(
+        viewMode === "writing" ? conceal : [],
+      ),
+    });
+  }, [viewMode]);
 
   useKeymap({ escape: onClose });
 
@@ -156,8 +206,19 @@ export default function DocumentView({
     <div className="doc-root">
       <div className="doc-topbar">
         <span className="doc-name">{name}</span>
-        <span className="doc-save-state">
-          {saveState === "clean" ? "saved" : saveState}
+        <span className="doc-meta">
+          <button
+            className="doc-view-toggle"
+            title="Toggle writing/source (⌘E)"
+            onClick={() =>
+              onChangeView(viewMode === "writing" ? "source" : "writing")
+            }
+          >
+            {viewMode}
+          </button>
+          <span className="doc-save-state">
+            {saveState === "clean" ? "saved" : saveState}
+          </span>
         </span>
       </div>
       <div className="doc-editor" ref={hostRef} />

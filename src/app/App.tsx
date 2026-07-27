@@ -60,6 +60,8 @@ export default function App() {
       <DocumentView
         directoryPath={mode.directoryPath}
         itemId={mode.itemId}
+        view={mode.view}
+        onChangeView={(view) => setMode({ ...mode, view })}
         onClose={() =>
           setMode({ type: "canvas", directoryPath: mode.directoryPath })
         }
@@ -136,7 +138,7 @@ export default function App() {
                       type: "document",
                       itemId,
                       directoryPath: mode.directoryPath,
-                      view: "source",
+                      view: "writing",
                     }
                   : {
                       type: "media",

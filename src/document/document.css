@@ -23,6 +23,29 @@
   color: #8a8fa3;
 }
 
+.doc-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.doc-view-toggle {
+  font: 500 10px/1 ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8fa3;
+  background: #1f2430;
+  border: 1px solid #2b3045;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.doc-view-toggle:hover {
+  color: #c8ccd4;
+  border-color: #565f89;
+}
+
 .doc-save-state {
   font: 500 10px/1 ui-monospace, monospace;
   letter-spacing: 0.08em;
