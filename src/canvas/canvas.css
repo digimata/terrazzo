@@ -110,15 +110,15 @@
 
 /* Selection + resize stroke: our blue, not tldraw's. */
 .canvas-root .tl-container {
-  --color-selection-stroke: #3ba3ff;
+  --color-selection-stroke: #b5d6fb;
 }
 
 /* Dimensions pill under the selection (Figma's W × H badge). */
 .dims-badge {
   position: absolute;
   transform: translateX(-50%);
-  background: #3ba3ff;
-  color: #ffffff;
+  background: #b5d6fb;
+  color: #101011; /* steel is light — dark text for contrast */
   font:
     600 11px/1 -apple-system,
     "SF Pro Text",

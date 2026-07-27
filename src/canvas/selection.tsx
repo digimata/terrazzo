@@ -113,7 +113,7 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
       ids: string[],
     ) => void;
     if (rest.length > 0) {
-      ctx.strokeStyle = "#3ba3ff";
+      ctx.strokeStyle = SNAP_STEEL;
       ctx.lineWidth = this.options.lineWidth / zoom;
       strokeIds(editor, ctx, rest);
     }
@@ -148,7 +148,7 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
       }
     }
     if (overlay.props.hintingShapeIds.length > 0) {
-      ctx.strokeStyle = "#3ba3ff";
+      ctx.strokeStyle = SNAP_STEEL;
       ctx.lineWidth = this.options.hintedLineWidth / zoom;
       strokeIds(editor, ctx, overlay.props.hintingShapeIds);
     }
@@ -160,7 +160,7 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
     _getThemeColors: () => { strokeColor: string; bgColor: string };
   }
 )._getThemeColors = () => ({
-  strokeColor: "#3ba3ff",
+  strokeColor: SNAP_STEEL,
   bgColor: "#ffffff",
 });
 
