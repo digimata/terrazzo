@@ -53,6 +53,7 @@ export class FigmaSelectionForeground extends SelectionForegroundOverlayUtil {
     _computeSelectionState: () => {
       shouldDisplayBox: boolean;
       showHandles: boolean;
+      showResizeHandles: boolean;
     } | null;
   }
 )._computeSelectionState = function (this: FigmaSelectionForeground) {
@@ -61,12 +62,14 @@ export class FigmaSelectionForeground extends SelectionForegroundOverlayUtil {
       _computeSelectionState: (this: unknown) => {
         shouldDisplayBox: boolean;
         showHandles: boolean;
+        showResizeHandles: boolean;
       } | null;
     }
   )._computeSelectionState.call(this);
   if (state && this.editor.isIn("select.resizing")) {
     state.shouldDisplayBox = true;
-    state.showHandles = true;
+    state.showHandles = true; // hit-target overlays
+    state.showResizeHandles = true; // the drawn corner squares
   }
   return state;
 };
