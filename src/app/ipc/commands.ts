@@ -3,7 +3,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import type {
-  CanvasItem,
+  DirectoryView,
   FileEntry,
   LayoutDelta,
   TextDoc,
@@ -23,8 +23,9 @@ export function listDir(path: string): Promise<FileEntry[]> {
 }
 
 /** Reconcile one directory's listing with its layout sidecar; returns the
- * canvas items the tldraw store projects. */
-export function openDirectory(path: string): Promise<CanvasItem[]> {
+ * canvas items the tldraw store projects plus the hidden unsupported-file
+ * count (PR-010). */
+export function openDirectory(path: string): Promise<DirectoryView> {
   return invoke("open_directory", { path });
 }
 

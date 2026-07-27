@@ -53,12 +53,13 @@ pub fn list_dir(state: State<AppState>, path: String) -> AppResult<Vec<scan::Fil
 }
 
 /// Reconcile one directory's listing with its layout sidecar and return the
-/// canvas items (v0 plan §4.2: the tldraw store is a projection of this).
+/// canvas items plus the hidden unsupported-file count (v0 plan §4.2: the
+/// tldraw store is a projection of this).
 #[tauri::command]
 pub fn open_directory(
     state: State<AppState>,
     path: String,
-) -> AppResult<Vec<layout::CanvasItem>> {
+) -> AppResult<layout::DirectoryView> {
     let root = state.root()?;
     let dir = paths::ensure_inside(&root, Path::new(&path))?;
     layout::open_directory(&dir)

@@ -317,7 +317,7 @@ export default function DocumentView({
     };
 
     (async () => {
-      const items = await openDirectory(directoryPath);
+      const { items } = await openDirectory(directoryPath);
       const item = items.find((i) => i.id === itemId);
       if (!item || item.missing) {
         onClose(); // vanished under us — back to canvas

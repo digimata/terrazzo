@@ -50,7 +50,7 @@ export default function MediaView({
 
   useEffect(() => {
     let alive = true;
-    openDirectory(directoryPath).then((items) => {
+    openDirectory(directoryPath).then(({ items }) => {
       if (!alive) return;
       const found = items.find((i) => i.id === itemId) ?? null;
       setItem(found && !found.missing ? found : null);

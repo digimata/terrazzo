@@ -41,6 +41,14 @@ export interface CanvasItem {
   missing: boolean;
 }
 
+/** Mirrors `workspace::layout::DirectoryView` — what `open_directory`
+ * returns: renderable items plus the count of unsupported files present but
+ * hidden (PR-010). */
+export interface DirectoryView {
+  items: CanvasItem[];
+  hiddenCount: number;
+}
+
 /** Mirrors `workspace::layout::LayoutDelta` — one item's layout mutation. */
 export interface LayoutDelta {
   id: string;

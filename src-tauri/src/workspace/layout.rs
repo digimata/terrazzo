@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::error::{AppError, AppResult, ErrorCode};
-use crate::workspace::scan::{self, FileEntry};
+use crate::workspace::scan::{self, FileEntry, FileKind};
 use crate::workspace::sidecar;
 
 const LAYOUT_FILE: &str = "layout.json";
@@ -94,6 +94,16 @@ pub struct CanvasItem {
     pub missing: bool,
 }
 
+/// What `open_directory` hands the frontend: the renderable items plus the
+/// count of unsupported files present but hidden (PR-010). Mirrored by
+/// `DirectoryView` in `src/app/ipc/types.ts`.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DirectoryView {
+    pub items: Vec<CanvasItem>,
+    pub hidden_count: usize,
+}
+
 /// A frontend layout mutation for one item. Mirrored by `LayoutDelta` in
 /// `src/app/ipc/types.ts`.
 #[derive(Deserialize)]
@@ -144,10 +154,16 @@ fn write(dir: &Path, layout: &LayoutFile) -> AppResult<()> {
 /// 4. On match, point the existing UUID at the new path.
 /// 5. If ambiguous, keep the old item (tombstone) and mint a new UUID.
 ///
-/// Unmatched layout entries stay in the file as tombstones but are not
-/// returned; tombstone rendering is M3 (PR-022).
-pub fn open_directory(dir: &Path) -> AppResult<Vec<CanvasItem>> {
+/// Unsupported files (PR-010) are detected but never rendered: a new one
+/// gets no card and no layout entry; an existing layout entry whose file is
+/// currently unsupported is retained and refreshed but returned to no one —
+/// hidden is distinct from missing. Only the count crosses the wire.
+pub fn open_directory(dir: &Path) -> AppResult<DirectoryView> {
     let entries = scan::list_dir(dir)?;
+    let hidden_count = entries
+        .iter()
+        .filter(|e| !e.is_dir && e.kind == FileKind::Other)
+        .count();
     let mut layout = read(dir)?;
     let before = layout.clone();
 
@@ -193,6 +209,10 @@ pub fn open_directory(dir: &Path) -> AppResult<Vec<CanvasItem>> {
                 matched.insert(id, entry);
             }
             None => {
+                // New unsupported file: no card, no layout entry (PR-010).
+                if !entry.is_dir && entry.kind == FileKind::Other {
+                    continue;
+                }
                 let id = Uuid::now_v7().to_string();
                 layout.items.insert(
                     id.clone(),
@@ -227,6 +247,10 @@ pub fn open_directory(dir: &Path) -> AppResult<Vec<CanvasItem>> {
         .items
         .iter()
         .filter(|(id, _)| !matched.contains_key(*id))
+        // An entry whose last-known path classifies as unsupported was
+        // hidden while alive (PR-010) — it never had a card, so its absence
+        // gets no tombstone either (PR-022).
+        .filter(|(_, item)| scan::classify(Path::new(&item.path)) != FileKind::Other)
         .map(|(id, item)| {
             let path = dir.join(&item.path);
             CanvasItem {
@@ -251,6 +275,9 @@ pub fn open_directory(dir: &Path) -> AppResult<Vec<CanvasItem>> {
 
     let mut out: Vec<CanvasItem> = matched
         .into_iter()
+        // A matched-but-unsupported file keeps its (now refreshed) layout
+        // entry but renders nothing: hidden, not a tombstone.
+        .filter(|(_, entry)| entry.is_dir || entry.kind != FileKind::Other)
         .map(|(id, entry)| {
             let item = &layout.items[&id];
             CanvasItem {
@@ -265,7 +292,10 @@ pub fn open_directory(dir: &Path) -> AppResult<Vec<CanvasItem>> {
         .chain(tombstones)
         .collect();
     out.sort_by(|a, b| a.z_index.cmp(&b.z_index).then(a.id.cmp(&b.id)));
-    Ok(out)
+    Ok(DirectoryView {
+        items: out,
+        hidden_count,
+    })
 }
 
 /// Move items to the system Trash (v0 §4.5): confirm each UUID still
