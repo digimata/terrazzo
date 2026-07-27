@@ -353,7 +353,19 @@ export default function CanvasView({
       },
       { source: "user", scope: "document" },
     );
-    return unlisten;
+    return () => {
+      unlisten();
+      // Flush pending deltas before the editor is torn down (v0 §3.1:
+      // debounced writes flush on navigation) — opening a note, a media
+      // view, or a folder inside the debounce window must not drop a move.
+      // Deltas are read synchronously here, while the editor is still live.
+      if (flushTimer.current) clearTimeout(flushTimer.current);
+      const ids = [...dirty.current];
+      dirty.current.clear();
+      if (ids.length > 0) {
+        void applyLayout(directoryPath, deltasFor(editor, ids)).catch(() => {});
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [directoryPath]);
 

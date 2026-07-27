@@ -133,7 +133,6 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
             flexDirection: "column",
             justifyContent: "space-between",
             padding: 10,
-            borderRadius: 8,
             background: "#1a1d26",
             border: "1px dashed #565f89",
             overflow: "hidden",
@@ -172,7 +171,6 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
         <HTMLContainer
           style={{
             position: "relative",
-            borderRadius: 8,
             overflow: "hidden",
             background: "#1f2430",
             pointerEvents: "all",
@@ -216,7 +214,6 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: 10,
-          borderRadius: 8,
           background: "#1f2430",
           border: `1px solid ${KIND_TINT[kind]}44`,
           overflow: "hidden",
