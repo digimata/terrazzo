@@ -79,7 +79,7 @@ body,
 /* Space switcher (Spatial's pattern): pill bottom-right, menu above it. */
 .space-pill {
   position: absolute;
-  right: 16px;
+  left: 16px;
   bottom: 16px;
   z-index: 30;
   display: flex;
@@ -106,7 +106,7 @@ body,
 
 .space-menu {
   position: absolute;
-  right: 16px;
+  left: 16px;
   bottom: 64px;
   z-index: 30;
   min-width: 300px;
