@@ -67,7 +67,7 @@ function FolderCard({ name, count }: { name: string; count: number }) {
         </span>
         <span
           style={{
-            font: "500 17px/1.5 -apple-system, 'SF Pro Text', system-ui, sans-serif",
+            font: "400 17px/1.5 -apple-system, 'SF Pro Display', system-ui, sans-serif",
             color: "#e6e9ef",
             overflow: "hidden",
             textOverflow: "ellipsis",
