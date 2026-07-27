@@ -312,6 +312,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     if (thumbnail) {
       return (
         <HTMLContainer
+          className="card-grow"
           style={{
             position: "relative",
             overflow: "hidden",
