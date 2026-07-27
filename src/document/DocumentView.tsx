@@ -55,7 +55,7 @@ const theme = EditorView.theme(
   {
     "&": {
       backgroundColor: "#16161c",
-      color: "#c8ccd4",
+      color: "#e6e9ef",
       height: "100%",
       fontSize: "15px",
     },
@@ -76,28 +76,23 @@ const theme = EditorView.theme(
   { dark: true },
 );
 
-// Monochrome, like the Spatial-styled media view: hierarchy comes from
-// weight and size, never hue. Structure that isn't prose (marks, URLs,
-// quotes) recedes to gray instead of taking a color.
+// All white, like Spatial: everything inherits the body color, and the
+// only differentiation is weight, size, italics, and decoration lines.
 const highlight = HighlightStyle.define([
-  { tag: tags.heading, color: "#e6e9ef", fontWeight: "600" },
-  { tag: tags.heading1, fontSize: "1.5em", color: "#e6e9ef", fontWeight: "600" },
-  { tag: tags.heading2, fontSize: "1.25em", color: "#e6e9ef", fontWeight: "600" },
-  { tag: tags.heading3, fontSize: "1.1em", color: "#e6e9ef", fontWeight: "600" },
-  { tag: tags.strikethrough, textDecoration: "line-through", color: "#565f89" },
-  { tag: tags.strong, color: "#e6e9ef", fontWeight: "600" },
+  { tag: tags.heading, fontWeight: "600" },
+  { tag: tags.heading1, fontSize: "1.5em", fontWeight: "600" },
+  { tag: tags.heading2, fontSize: "1.25em", fontWeight: "600" },
+  { tag: tags.heading3, fontSize: "1.1em", fontWeight: "600" },
+  { tag: tags.strikethrough, textDecoration: "line-through" },
+  { tag: tags.strong, fontWeight: "600" },
   { tag: tags.emphasis, fontStyle: "italic" },
-  { tag: tags.link, color: "#e6e9ef", textDecoration: "underline" },
-  { tag: tags.url, color: "#565f89" },
+  { tag: tags.link, textDecoration: "underline" },
   {
     tag: tags.monospace,
-    color: "#c8ccd4",
     fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
     fontSize: "0.9em",
   },
-  { tag: tags.quote, color: "#8a8fa3" },
-  { tag: tags.list, color: "#8a8fa3" },
-  { tag: tags.meta, color: "#565f89" },
+  { tag: tags.quote, fontStyle: "italic" },
 ]);
 
 export default function DocumentView({
