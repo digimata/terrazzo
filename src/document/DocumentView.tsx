@@ -39,7 +39,7 @@ import {
 } from "../app/ipc/commands";
 import type { FsEvent } from "../app/ipc/types";
 import { useKeymap } from "../app/hooks/keyboard";
-import { blockquoteLines, conceal, hrLines } from "./conceal";
+import { blockquoteLines, conceal, hrLines, emDashes } from "./conceal";
 import "./document.css";
 
 export type DocumentViewMode = "writing" | "source";
@@ -384,7 +384,7 @@ export default function DocumentView({
             EditorView.lineWrapping,
             theme,
             concealCompartment.current.of(
-              viewModeRef.current === "writing" ? [conceal, hrLines] : [],
+              viewModeRef.current === "writing" ? [conceal, hrLines, emDashes] : [],
             ),
             EditorView.updateListener.of((update) => {
               if (!update.docChanged || applyingExternal || !view) return;
@@ -431,7 +431,7 @@ export default function DocumentView({
   useEffect(() => {
     editorRef.current?.dispatch({
       effects: concealCompartment.current.reconfigure(
-        viewMode === "writing" ? [conceal, hrLines] : [],
+        viewMode === "writing" ? [conceal, hrLines, emDashes] : [],
       ),
     });
   }, [viewMode]);
