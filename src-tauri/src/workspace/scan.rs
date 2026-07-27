@@ -20,6 +20,10 @@ pub struct FileEntry {
     /// Nanoseconds as a string: JS numbers lose precision past 2^53.
     pub mtime_ns: String,
     pub is_dir: bool,
+    /// Non-dot children for a directory (folder cards show "N items");
+    /// `None` for files.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub child_count: Option<usize>,
 }
 
 #[derive(Serialize, Clone, Copy, PartialEq, Eq)]
@@ -48,6 +52,16 @@ pub fn classify(path: &Path) -> FileKind {
     }
 }
 
+fn count_children(dir: &Path) -> usize {
+    std::fs::read_dir(dir)
+        .map(|rd| {
+            rd.flatten()
+                .filter(|e| !e.file_name().to_string_lossy().starts_with('.'))
+                .count()
+        })
+        .unwrap_or(0)
+}
+
 pub fn entry_for(path: &Path) -> AppResult<FileEntry> {
     let meta = path.metadata()?;
     let mtime_ns = (meta.mtime() as i128) * 1_000_000_000 + i128::from(meta.mtime_nsec());
@@ -67,6 +81,7 @@ pub fn entry_for(path: &Path) -> AppResult<FileEntry> {
         size: meta.size(),
         mtime_ns: mtime_ns.to_string(),
         is_dir: meta.is_dir(),
+        child_count: meta.is_dir().then(|| count_children(path)),
     })
 }
 

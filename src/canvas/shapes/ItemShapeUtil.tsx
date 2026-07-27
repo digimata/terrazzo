@@ -19,22 +19,64 @@ import {
 } from "tldraw";
 import type { FileKind } from "../../app/ipc/types";
 
-/** Our folder glyph: classic two-tone folder, back panel with tab plus a
- * lighter front panel, drawn for the dark canvas. */
-function FolderGlyph({ size }: { size: number }) {
+/** Folder card (Spatial's look): the folder IS the card — a back panel's
+ * tab peeks above a full-width front panel, item count + name inside the
+ * front, bottom-left. Drawn at the fixed 180×120 dir frame. */
+function FolderCard({ name, count }: { name: string; count: number }) {
   return (
-    <svg
-      width={size}
-      height={(size * 56) / 72}
-      viewBox="0 0 72 56"
-      fill="none"
-    >
-      <path
-        d="M0 12 a6 6 0 0 1 6 -6 h17.5 a6 6 0 0 1 4.4 1.9 l3.8 4.1 H66 a6 6 0 0 1 6 6 v32 a6 6 0 0 1 -6 6 H6 a6 6 0 0 1 -6 -6 Z"
-        fill="#3d4350"
-      />
-      <rect x="0" y="16" width="72" height="40" rx="6" fill="#525a6c" />
-    </svg>
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <svg
+        width="180"
+        height="120"
+        viewBox="0 0 180 120"
+        fill="none"
+        style={{ position: "absolute", inset: 0 }}
+      >
+        <path
+          d="M6 44 V13 a7 7 0 0 1 7 -7 h53 a8 8 0 0 1 6 2.7 l5.6 6.3 a6 6 0 0 0 4.5 2 H167 a7 7 0 0 1 7 7 v20 H6 Z"
+          fill="#1d2123"
+          stroke="#2b2e2f"
+          strokeWidth="1"
+        />
+      </svg>
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 16,
+          bottom: 0,
+          background: "#232729",
+          border: "1px solid #2b2e2f",
+          borderRadius: 12,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
+          padding: "12px 14px",
+          overflow: "hidden",
+        }}
+      >
+        <span
+          style={{
+            font: "500 10px/1.3 -apple-system, 'SF Pro Text', system-ui, sans-serif",
+            color: "#8a8f98",
+          }}
+        >
+          {count} {count === 1 ? "item" : "items"}
+        </span>
+        <span
+          style={{
+            font: "600 12px/1.4 -apple-system, 'SF Pro Text', system-ui, sans-serif",
+            color: "#e6e9ef",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {name}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -52,6 +94,8 @@ export interface ItemShapeProps {
   /** Rendered static preview HTML for a Markdown note card (PR-009).
    * Rust-generated with raw HTML stripped; empty until delivered. */
   note: string;
+  /** Non-dot children of a directory ("N items" on folder cards). */
+  childCount: number;
   /** PR-022 tombstone: the file no longer resolves. The card stays visible
    * and labeled, keeps its frame, and can be dismissed via Move to Trash. */
   missing: boolean;
@@ -135,6 +179,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     path: T.string,
     thumbnail: T.string,
     note: T.string,
+    childCount: T.number,
     missing: T.boolean,
   };
 
@@ -147,6 +192,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       path: "",
       thumbnail: "",
       note: "",
+      childCount: 0,
       missing: false,
     };
   }
@@ -220,31 +266,9 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     }
 
     if (kind === "dir") {
-      // A floating glyph + name, no card box (Spatial's folder look).
       return (
-        <HTMLContainer
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 10,
-            pointerEvents: "all",
-          }}
-        >
-          <FolderGlyph size={72} />
-          <span
-            style={{
-              font: "500 12px/1.3 -apple-system, 'SF Pro Text', system-ui, sans-serif",
-              color: "#c6cad2",
-              maxWidth: "90%",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {name}
-          </span>
+        <HTMLContainer style={{ pointerEvents: "all" }}>
+          <FolderCard name={name} count={shape.props.childCount} />
         </HTMLContainer>
       );
     }

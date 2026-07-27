@@ -17,6 +17,9 @@ export interface FileEntry {
   /** Nanoseconds since epoch as a string — exceeds JS safe-integer range. */
   mtimeNs: string;
   isDir: boolean;
+  /** Non-dot children for a directory (folder cards show "N items");
+   * absent for files. */
+  childCount?: number;
 }
 
 /** Mirrors `workspace::layout::Frame` — page-space rect in layout.json. */

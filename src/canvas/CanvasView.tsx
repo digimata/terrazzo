@@ -112,6 +112,7 @@ function shapeFor(item: CanvasItem, place: () => { x: number; y: number }) {
       name: item.entry.name,
       kind: item.entry.kind,
       path: item.entry.path,
+      childCount: item.entry.childCount ?? 0,
       missing: item.missing,
     },
   };
@@ -278,6 +279,7 @@ export default function CanvasView({
         } else if (
           shape.props.path !== item.entry.path ||
           shape.props.name !== item.entry.name ||
+          shape.props.childCount !== (item.entry.childCount ?? 0) ||
           shape.props.missing !== item.missing
         ) {
           editor.updateShapes<ItemShape>([
@@ -287,6 +289,7 @@ export default function CanvasView({
               props: {
                 name: item.entry.name,
                 path: item.entry.path,
+                childCount: item.entry.childCount ?? 0,
                 missing: item.missing,
                 // A stale preview must not survive on a tombstone; when the
                 // file returns, fillPreviews below re-delivers.

@@ -264,6 +264,7 @@ pub fn open_directory(dir: &Path) -> AppResult<DirectoryView> {
                     size: item.last_seen.size,
                     mtime_ns: item.last_seen.mtime_ns.clone(),
                     is_dir: false,
+                    child_count: None,
                 },
                 frame: item.frame.clone(),
                 rotation: item.rotation,
