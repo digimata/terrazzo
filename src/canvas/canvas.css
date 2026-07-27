@@ -21,7 +21,7 @@
  * and scaled to the frame; content is inert (the shape owns the pointer). */
 .note-card {
   padding: 72px 48px 48px;
-  background: #232729; /* same fill as the folder card front */
+  background: #171719;
   color: #e6e9ef;
   font:
     11px/1.8 -apple-system,
