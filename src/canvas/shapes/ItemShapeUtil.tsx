@@ -34,7 +34,7 @@ function FolderCard({ name, count }: { name: string; count: number }) {
         style={{ position: "absolute", inset: 0 }}
       >
         <path
-          d="M12 80 V30 a14 14 0 0 1 14 -14 h108 a16 16 0 0 1 12.2 5.6 l11 12.4 a12 12 0 0 0 9.2 4 H354 a14 14 0 0 1 14 14 v28 H12 Z"
+          d="M12 80 V30 a14 14 0 0 1 14 -14 h96 a16 16 0 0 1 12.2 5.6 l11 12.4 a12 12 0 0 0 9.2 4 H314 a14 14 0 0 1 14 14 v28 H12 Z"
           fill="#1d2123"
           stroke="#2b2e2f"
           strokeWidth="1"
@@ -49,17 +49,17 @@ function FolderCard({ name, count }: { name: string; count: number }) {
           bottom: 0,
           background: "#232729",
           border: "1px solid #2b2e2f",
-          borderRadius: 20,
+          borderRadius: 26,
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
-          padding: "22px 26px",
+          padding: "26px 30px",
           overflow: "hidden",
         }}
       >
         <span
           style={{
-            font: "500 15px/1.5 -apple-system, 'SF Pro Text', system-ui, sans-serif",
+            font: "400 14px/1.5 -apple-system, 'SF Pro Text', system-ui, sans-serif",
             color: "#8a8f98",
           }}
         >
@@ -67,7 +67,7 @@ function FolderCard({ name, count }: { name: string; count: number }) {
         </span>
         <span
           style={{
-            font: "600 18px/1.5 -apple-system, 'SF Pro Text', system-ui, sans-serif",
+            font: "500 17px/1.5 -apple-system, 'SF Pro Text', system-ui, sans-serif",
             color: "#e6e9ef",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -147,8 +147,8 @@ export const NOTE_CARD_W = 260;
 export const NOTE_CARD_H = 364;
 /** Fixed folder frame (Spatial's proportions: near note height, ~1.5× its
  * width — folders should read bigger than notes, not smaller). */
-export const DIR_W = 380;
-export const DIR_H = 300;
+export const DIR_W = 340;
+export const DIR_H = 270;
 
 /** Fixed frame for the kind, or null if the kind is freely resizable. */
 export function fixedSize(kind: FileKind) {
