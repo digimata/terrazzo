@@ -341,8 +341,8 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
             >
               <span
                 style={{
-                  width: 44,
-                  height: 44,
+                  width: 64,
+                  height: 64,
                   borderRadius: "50%",
                   background: "rgba(16, 16, 20, 0.55)",
                   display: "flex",
@@ -350,7 +350,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
                   justifyContent: "center",
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 16 16">
+                <svg width="24" height="24" viewBox="0 0 16 16">
                   {/* nudged right of center — optical centering for a triangle */}
                   <path d="M5.5 3.5 L12.5 8 L5.5 12.5 Z" fill="#ffffff" />
                 </svg>
