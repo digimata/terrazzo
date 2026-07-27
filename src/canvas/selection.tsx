@@ -44,6 +44,31 @@ export class FigmaSelectionForeground extends SelectionForegroundOverlayUtil {
     if (doorsOnlySelection(this.editor)) return false;
     return super.isActive();
   }
+
+  /** Selected cards hold the hover grow (card-grown), so when a single item
+   * is selected the box and corner squares draw in a ctx scaled about the
+   * selection center by the same factor — otherwise the card pokes past its
+   * own box. Multi-select keeps rest bounds (cards grow about their own
+   * centers; a shared box can't follow all of them). */
+  override render(
+    ctx: CanvasRenderingContext2D,
+    overlays: ReturnType<SelectionForegroundOverlayUtil["getOverlays"]>,
+  ) {
+    const only = this.editor.getOnlySelectedShape();
+    const bounds = this.editor.getSelectionRotatedPageBounds();
+    if (only?.type === "item" && bounds) {
+      const { w, h } = only.props as { w: number; h: number };
+      const g = growScaleFor(w, h);
+      ctx.save();
+      ctx.translate(bounds.midX, bounds.midY);
+      ctx.scale(g, g);
+      ctx.translate(-bounds.midX, -bounds.midY);
+      super.render(ctx, overlays);
+      ctx.restore();
+      return;
+    }
+    super.render(ctx, overlays);
+  }
 }
 
 // Figma keeps the box and corner handles visible while you resize; tldraw
@@ -145,7 +170,35 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
     if (rest.length > 0) {
       ctx.strokeStyle = SNAP_STEEL;
       ctx.lineWidth = this.options.lineWidth / zoom;
-      strokeIds(editor, ctx, rest);
+      // Selected item cards (media) hold the hover grow, so their ring is
+      // stroked from the indicator path scaled about the card center by the
+      // same factor. Anything else falls back to the stock stroke.
+      const fallback: string[] = [];
+      for (const id of rest) {
+        const shape = editor.getShape(
+          id as Parameters<typeof editor.getShape>[0],
+        );
+        if (!shape || shape.type !== "item") {
+          fallback.push(id);
+          continue;
+        }
+        const indicator = (
+          editor.getShapeUtil(shape) as {
+            getIndicatorPath(s: typeof shape): Path2D;
+          }
+        ).getIndicatorPath(shape);
+        const t = editor.getShapePageTransform(shape);
+        const { w, h } = shape.props as { w: number; h: number };
+        const g = growScaleFor(w, h);
+        const m = new DOMMatrix([t.a, t.b, t.c, t.d, t.e, t.f])
+          .translateSelf(w / 2, h / 2)
+          .scaleSelf(g, g)
+          .translateSelf(-w / 2, -h / 2);
+        const path = new Path2D();
+        path.addPath(indicator, m);
+        ctx.stroke(path);
+      }
+      if (fallback.length > 0) strokeIds(editor, ctx, fallback);
     }
     if (doorSelected.size > 0) {
       // Door rings obey the z-order: walk door shapes bottom-to-top, punch

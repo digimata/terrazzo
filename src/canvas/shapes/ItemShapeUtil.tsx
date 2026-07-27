@@ -248,9 +248,9 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   override component(shape: ItemShape) {
     const { name, kind, thumbnail, note, missing } = shape.props;
 
-    // Doors hold the hover grow while selected (Spatial's pattern) — the
-    // silhouette ring scales to match in SelectionOnlyIndicator. Hook runs
-    // before the missing early-return (rules of hooks).
+    // Cards hold the hover grow while selected (Spatial's pattern) — the
+    // selection overlays in selection.tsx scale by the same factor. Hook
+    // runs before the missing early-return (rules of hooks).
     const isSelected = useValue(
       "item-selected",
       () => this.editor.getSelectedShapeIds().includes(shape.id),
@@ -300,14 +300,14 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
 
     const growScale = growScaleFor(shape.props.w, shape.props.h);
     const grow = { "--grow-scale": `${growScale}` } as React.CSSProperties;
-    // Selected doors pin the grow; media stays hover-only (its selection box
-    // and handles are drawn at rest bounds and must hug the pixels).
-    const doorGrow = isSelected ? "card-grow card-grown" : "card-grow";
+    // Selected cards pin the hover grow (Spatial); the selection overlays
+    // scale by the same factor so box, handles, and rings hug the pixels.
+    const grownCls = isSelected ? "card-grow card-grown" : "card-grow";
 
     if (kind === "dir") {
       return (
         <HTMLContainer
-          className={doorGrow}
+          className={grownCls}
           style={{ pointerEvents: "all", ...grow }}
         >
           <FolderCard name={name} count={shape.props.childCount} />
@@ -322,7 +322,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       const scale = shape.props.w / NOTE_W;
       return (
         <HTMLContainer
-          className={doorGrow}
+          className={grownCls}
           style={{
             overflow: "hidden",
             borderRadius: 24, // Spatial's soft card corner — notes only
@@ -348,7 +348,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     if (thumbnail) {
       return (
         <HTMLContainer
-          className="card-grow"
+          className={grownCls}
           style={{
             position: "relative",
             overflow: "hidden",
