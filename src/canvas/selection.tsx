@@ -82,15 +82,14 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
     if (!overlay) return;
     const editor = this.editor;
     const zoom = editor.getZoomLevel();
-    const dirs: string[] = [];
+    const doorSelected = new Set<string>();
     const rest: string[] = [];
     for (const id of overlay.props.idsToDisplay) {
       const shape = editor.getShape(id as Parameters<typeof editor.getShape>[0]);
-      if (shape?.type === "item" && (shape.props as { kind: string }).kind === "dir") {
-        dirs.push(id);
-      } else {
-        rest.push(id);
-      }
+      const kind =
+        shape?.type === "item" ? (shape.props as { kind: string }).kind : null;
+      if (kind === "dir" || kind === "markdown") doorSelected.add(id);
+      else rest.push(id);
     }
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -104,10 +103,35 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
       ctx.lineWidth = this.options.lineWidth / zoom;
       strokeIds(editor, ctx, rest);
     }
-    if (dirs.length > 0) {
-      ctx.strokeStyle = SNAP_STEEL; // caret steel, same as the snap guides
+    if (doorSelected.size > 0) {
+      // Door rings obey the z-order: walk door shapes bottom-to-top, punch
+      // each card's body out of the overlay (destination-out), then stroke
+      // its own ring — a card on top occludes the ring of the one below,
+      // instead of every ring floating above the whole stack.
       ctx.lineWidth = 2 / zoom;
-      strokeIds(editor, ctx, dirs);
+      for (const shape of editor.getCurrentPageShapesSorted()) {
+        if (shape.type !== "item") continue;
+        const kind = (shape.props as { kind: string }).kind;
+        if (kind !== "dir" && kind !== "markdown") continue;
+        const indicator = (
+          editor.getShapeUtil(shape) as {
+            getIndicatorPath(s: typeof shape): Path2D;
+          }
+        ).getIndicatorPath(shape);
+        const t = editor.getShapePageTransform(shape);
+        const path = new Path2D();
+        path.addPath(
+          indicator,
+          new DOMMatrix([t.a, t.b, t.c, t.d, t.e, t.f]),
+        );
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fill(path);
+        ctx.globalCompositeOperation = "source-over";
+        if (doorSelected.has(shape.id)) {
+          ctx.strokeStyle = SNAP_STEEL; // caret steel, same as snap guides
+          ctx.stroke(path);
+        }
+      }
     }
     if (overlay.props.hintingShapeIds.length > 0) {
       ctx.strokeStyle = "#3ba3ff";

@@ -397,7 +397,11 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
    * and the outline is just tab across the top + rounded body below. */
   override getIndicatorPath(shape: ItemShape) {
     const kind = shape.props.kind;
-    if (kind === "markdown") return new Path2D();
+    if (kind === "markdown") {
+      const path = new Path2D();
+      path.roundRect(0, 0, shape.props.w, shape.props.h, 24);
+      return path;
+    }
     if (kind === "dir") {
       return new Path2D(
         "M0 248 V18 a14 14 0 0 1 14 -14 h76 a24 24 0 0 1 18 8 " +
