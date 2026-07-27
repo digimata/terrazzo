@@ -350,7 +350,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
                   justifyContent: "center",
                 }}
               >
-                <svg width="24" height="24" viewBox="0 0 16 16">
+                <svg width="30" height="30" viewBox="0 0 16 16">
                   {/* nudged right of center — optical centering for a triangle */}
                   <path d="M5.5 3.5 L12.5 8 L5.5 12.5 Z" fill="#ffffff" />
                 </svg>
