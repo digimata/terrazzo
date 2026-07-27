@@ -52,7 +52,7 @@ body,
   border-radius: 4px;
   color: #8a8f98;
   font-family: inherit; /* buttons don't inherit by default */
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
 }
 
@@ -68,7 +68,7 @@ body,
 
 .app-crumb-sep {
   color: #3a3f4b;
-  font-size: 12px;
+  font-size: 11px;
   padding: 0 2px;
 }
 
