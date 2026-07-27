@@ -80,7 +80,7 @@ export const NOTE_W = 440;
 /** Fixed portrait frame for Markdown notes (Spatial's card proportions).
  * Notes and folders are not resizable — one canonical card size each. */
 export const NOTE_CARD_W = 260;
-export const NOTE_CARD_H = 380;
+export const NOTE_CARD_H = 364;
 
 /** Fixed frame for the kind, or null if the kind is freely resizable. */
 export function fixedSize(kind: FileKind) {
