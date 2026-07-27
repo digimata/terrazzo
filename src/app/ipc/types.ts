@@ -49,6 +49,14 @@ export interface LayoutDelta {
   zIndex: number;
 }
 
+/** Mirrors `commands::TextDoc` — a text file's contents plus the mtime that
+ * lets document mode tell its own save echoes from external edits. */
+export interface TextDoc {
+  contents: string;
+  /** Nanoseconds since epoch as a string — exceeds JS safe-integer range. */
+  mtimeNs: string;
+}
+
 /** Mirrors `workspace::sidecar::WorkspaceMeta` (`.canvas/workspace.json`). */
 export interface WorkspaceMeta {
   schemaVersion: number;

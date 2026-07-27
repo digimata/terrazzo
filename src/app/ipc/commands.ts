@@ -6,6 +6,7 @@ import type {
   CanvasItem,
   FileEntry,
   LayoutDelta,
+  TextDoc,
   WorkspaceInfo,
 } from "./types";
 
@@ -61,14 +62,29 @@ export function openItem(path: string): Promise<void> {
 
 /** Read a text file for document mode (M4). The buffer on disk stays
  * canonical — the editor holds a copy, never a second source of truth. */
-export function readTextFile(path: string): Promise<string> {
+export function readTextFile(path: string): Promise<TextDoc> {
   return invoke("read_text_file", { path });
 }
 
 /** Atomic save for document mode: temp file + rename, so a crash mid-write
- * never truncates a note. */
-export function writeTextFile(path: string, contents: string): Promise<void> {
+ * never truncates a note. Returns the file's new mtime. */
+export function writeTextFile(path: string, contents: string): Promise<string> {
   return invoke("write_text_file", { path, contents });
+}
+
+/** Mirror the document buffer to a recovery draft, keyed by item UUID. */
+export function writeDraft(itemId: string, contents: string): Promise<void> {
+  return invoke("write_draft", { itemId, contents });
+}
+
+/** The item's recovery draft, or null. Newer than the file = crash signal. */
+export function readDraft(itemId: string): Promise<TextDoc | null> {
+  return invoke("read_draft", { itemId });
+}
+
+/** Drop an item's recovery draft (clean close, or user discarded it). */
+export function deleteDraft(itemId: string): Promise<void> {
+  return invoke("delete_draft", { itemId });
 }
 
 /** Copy external files into the workspace (Finder drop). Never moves or

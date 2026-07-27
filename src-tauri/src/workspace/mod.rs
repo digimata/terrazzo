@@ -1,3 +1,4 @@
+pub mod drafts;
 pub mod import;
 pub mod layout;
 pub mod paths;

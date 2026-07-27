@@ -21,6 +21,9 @@ pub fn run() {
             commands::move_to_trash,
             commands::read_text_file,
             commands::write_text_file,
+            commands::write_draft,
+            commands::read_draft,
+            commands::delete_draft,
             commands::open_item
         ])
         .run(tauri::generate_context!())
