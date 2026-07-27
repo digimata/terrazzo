@@ -101,3 +101,8 @@
   max-width: 720px;
   margin: 0 auto;
 }
+
+/* Text I-beam over the document itself; the app arrow everywhere else. */
+.doc-editor .cm-content {
+  cursor: text;
+}

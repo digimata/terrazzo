@@ -160,4 +160,8 @@
  * text cursors stay native. */
 .canvas-root .tl-container {
   --tl-cursor-default: var(--cursor-arrow);
+  --tl-cursor-pointer: var(--cursor-arrow);
+  --tl-cursor-move: var(--cursor-arrow);
+  --tl-cursor-grab: var(--cursor-arrow);
+  --tl-cursor-grabbing: var(--cursor-arrow);
 }
