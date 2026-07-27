@@ -17,7 +17,6 @@ import {
   ensureThumbnail,
   importFiles,
   moveToTrash,
-  createFolder,
   openDirectory,
   openItem,
   renderMarkdown,
@@ -529,17 +528,6 @@ export default function CanvasView({
           hydrate(editor);
         }}
       />
-      <button
-        className="canvas-new-space"
-        title="New Space"
-        onClick={() =>
-          createFolder(directoryPath).catch((e) =>
-            setStatus(`new space failed: ${JSON.stringify(e)}`),
-          )
-        }
-      >
-        + New Space
-      </button>
       <div className="canvas-status">{status}</div>
     </div>
   );

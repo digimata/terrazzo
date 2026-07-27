@@ -131,30 +131,6 @@
   z-index: 200;
 }
 
-/* New Space button — the only top-left chrome (replaces tldraw's menu +
- * page bar). A Space is a folder; the watcher places its card. */
-.canvas-new-space {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 10;
-  padding: 6px 10px;
-  background: #1c1c23;
-  color: #c6cad2;
-  border: 1px solid #2b2e2f;
-  border-radius: 8px;
-  font:
-    500 12px/1 -apple-system,
-    "SF Pro Text",
-    system-ui,
-    sans-serif;
-  cursor: pointer;
-}
-
-.canvas-new-space:hover {
-  background: #232729;
-  color: #e6e9ef;
-}
 
 /* Our arrow replaces tldraw's default cursor on the canvas; grab/resize/
  * text cursors stay native. */

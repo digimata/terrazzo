@@ -32,44 +32,17 @@ body,
   background: #16161c;
 }
 
-.app-topbar {
+/* Breadcrumbs float over the canvas, top-left — no bar, no divider. */
+.app-crumbs-float {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 20;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border-bottom: 1px solid #26262e;
-  font-family: -apple-system, system-ui, sans-serif;
-  z-index: 10;
-}
-
-.app-nav {
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #8a8f98;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.app-nav:hover:not(:disabled) {
-  background: #23232b;
-  color: #e6e9ef;
-}
-
-.app-nav:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.app-crumbs {
-  display: flex;
-  align-items: center;
-  margin-left: 8px;
   overflow: hidden;
   white-space: nowrap;
+  font-family: -apple-system, system-ui, sans-serif;
 }
 
 .app-crumb {
@@ -101,4 +74,87 @@ body,
 .app-canvas {
   flex: 1;
   position: relative;
+}
+
+/* Space switcher (Spatial's pattern): pill bottom-right, menu above it. */
+.space-pill {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  background: #1c1c23;
+  color: #8a8f98;
+  border: 1px solid #2b2e2f;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.space-pill:hover {
+  color: #e6e9ef;
+  background: #232729;
+}
+
+.space-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 29;
+}
+
+.space-menu {
+  position: absolute;
+  right: 16px;
+  bottom: 64px;
+  z-index: 30;
+  min-width: 300px;
+  padding: 10px;
+  background: #1c1c23;
+  border: 1px solid #2b2e2f;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.space-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #71767f;
+  font: 500 14px/1 -apple-system, "SF Pro Text", system-ui, sans-serif;
+  cursor: pointer;
+  text-align: left;
+}
+
+.space-row:hover {
+  background: #232729;
+}
+
+.space-row-current {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.space-row-icon {
+  flex-shrink: 0;
+}
+
+.space-row-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.space-row-key {
+  color: inherit;
+  opacity: 0.7;
+  font-size: 13px;
 }

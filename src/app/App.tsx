@@ -3,6 +3,7 @@ import type { AppMode } from "./mode";
 import type { WorkspaceInfo } from "./ipc/types";
 import { useKeyboardDispatcher, useKeymap } from "./hooks/keyboard";
 import StartScreen from "./StartScreen";
+import SpaceSwitcher from "./SpaceSwitcher";
 import CanvasView from "../canvas/CanvasView";
 import MediaView from "../media/MediaView";
 import DocumentView from "../document/DocumentView";
@@ -96,36 +97,28 @@ export default function App() {
 
     return (
       <div className="app-root">
-        <div className="app-topbar">
-          <button
-            className="app-nav"
-            onClick={goBack}
-            disabled={back.length === 0}
-          >
-            &lsaquo;
-          </button>
-          <button
-            className="app-nav"
-            onClick={goForward}
-            disabled={forward.length === 0}
-          >
-            &rsaquo;
-          </button>
-          <div className="app-crumbs">
-            {crumbs.map((crumb, i) => (
-              <span key={crumb.path}>
-                {i > 0 && <span className="app-crumb-sep">/</span>}
-                <button
-                  className="app-crumb"
-                  disabled={i === crumbs.length - 1}
-                  onClick={() => navigate(crumb.path)}
-                >
-                  {crumb.label}
-                </button>
-              </span>
-            ))}
-          </div>
+        {/* Breadcrumbs float over the canvas — no bar, no divider. Back/
+            forward stay on cmd+[ and cmd+]. */}
+        <div className="app-crumbs-float">
+          {crumbs.map((crumb, i) => (
+            <span key={crumb.path}>
+              {i > 0 && <span className="app-crumb-sep">/</span>}
+              <button
+                className="app-crumb"
+                disabled={i === crumbs.length - 1}
+                onClick={() => navigate(crumb.path)}
+              >
+                {crumb.label}
+              </button>
+            </span>
+          ))}
         </div>
+        <SpaceSwitcher
+          root={workspace.root}
+          rootName={workspace.meta.name}
+          currentPath={mode.directoryPath}
+          onNavigate={navigate}
+        />
         <div className="app-canvas">
           <CanvasView
             key={mode.directoryPath}
