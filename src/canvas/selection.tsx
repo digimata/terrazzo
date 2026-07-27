@@ -105,7 +105,7 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
       strokeIds(editor, ctx, rest);
     }
     if (dirs.length > 0) {
-      ctx.strokeStyle = "#ffffff";
+      ctx.strokeStyle = SNAP_STEEL; // caret steel, same as the snap guides
       ctx.lineWidth = 2 / zoom;
       strokeIds(editor, ctx, dirs);
     }
