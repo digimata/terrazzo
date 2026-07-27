@@ -20,6 +20,7 @@ import "tldraw/tldraw.css";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import {
+  createNote,
   ensureThumbnail,
   importClipboardImages,
   importFiles,
@@ -567,12 +568,8 @@ export default function CanvasView({
     const shapes = selectedItems(editor);
     if (shapes.length === 0) return;
     const ids = shapes.map((s) => itemIdFor(s.id));
-    try {
-      await moveToTrash(directoryPath, ids);
-    } catch (e) {
-      setStatus(`move to trash failed: ${JSON.stringify(e)}`);
-      return;
-    }
+    // Optimistic: the cards vanish on the keystroke, the trash call runs
+    // after. macOS's trash API takes long enough to read as lag otherwise.
     hydrating.current = true;
     try {
       editor.run(() => editor.deleteShapes(shapes.map((s) => s.id)), {
@@ -582,6 +579,20 @@ export default function CanvasView({
       hydrating.current = false;
     }
     for (const id of ids) knownIds.current.delete(id);
+    try {
+      await moveToTrash(directoryPath, ids);
+    } catch (e) {
+      // Files are still on disk — put the cards back exactly as they were.
+      hydrating.current = true;
+      try {
+        editor.run(() => editor.createShapes(shapes), { history: "ignore" });
+      } finally {
+        hydrating.current = false;
+      }
+      for (const id of ids) knownIds.current.add(id);
+      setStatus(`move to trash failed: ${JSON.stringify(e)}`);
+      return;
+    }
     setStatus(
       ids.length === 1
         ? `moved “${shapes[0].props.name}” to Trash`
@@ -606,6 +617,13 @@ export default function CanvasView({
     "cmd+o": () => {
       const editor = editorRef.current;
       if (editor) openSelection(editor);
+    },
+    // New note in the current directory; the fs-event reconcile places its
+    // card, same as folders created from the Finder.
+    "cmd+n": () => {
+      createNote(directoryPath).catch((e) =>
+        setStatus(`new note failed: ${JSON.stringify(e)}`),
+      );
     },
     // Cards are files: tldraw's plain-delete would remove the shape without
     // touching disk and desync the canvas. Claimed — plain delete IS Move

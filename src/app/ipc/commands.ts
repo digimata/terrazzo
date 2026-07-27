@@ -3,6 +3,8 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import type {
+  ClipboardImage,
+  ClipboardImport,
   DirectoryView,
   FileEntry,
   LayoutDelta,
@@ -33,6 +35,12 @@ export function openDirectory(path: string): Promise<DirectoryView> {
  * collision-safe (Untitled, Untitled 2, …). */
 export function createFolder(parent: string): Promise<FileEntry> {
   return invoke("create_folder", { parent });
+}
+
+/** Create an empty Markdown note inside a directory; names are
+ * collision-safe (Untitled.md, Untitled 2.md, …). */
+export function createNote(parent: string): Promise<FileEntry> {
+  return invoke("create_note", { parent });
 }
 
 /** Render a Markdown file to static preview HTML for its canvas note card
@@ -107,4 +115,14 @@ export function importFiles(
   destDir?: string,
 ): Promise<FileEntry[]> {
   return invoke("import_files", { sources, destDir: destDir ?? null });
+}
+
+/** Write pasted clipboard images into a directory as real files. Rust
+ * validates signatures, never overwrites, and reconciles so the returned
+ * items carry durable UUIDs (RCA: pasted-images-not-persisting). */
+export function importClipboardImages(
+  destDir: string,
+  images: ClipboardImage[],
+): Promise<ClipboardImport> {
+  return invoke("import_clipboard_images", { destDir, images });
 }

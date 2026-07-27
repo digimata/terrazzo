@@ -114,6 +114,23 @@ pub fn create_folder(state: State<AppState>, parent: String) -> AppResult<scan::
     scan::entry_for(&target)
 }
 
+/// Create an empty Markdown note next to its siblings; collision-safe
+/// naming like `create_folder`. The canvas reconcile places its card.
+#[tauri::command]
+pub fn create_note(state: State<AppState>, parent: String) -> AppResult<scan::FileEntry> {
+    let root = state.root()?;
+    let dir = paths::ensure_inside(&root, Path::new(&parent))?;
+    let mut name = String::from("Untitled.md");
+    let mut n = 1;
+    while dir.join(&name).exists() {
+        n += 1;
+        name = format!("Untitled {n}.md");
+    }
+    let target = dir.join(&name);
+    std::fs::write(&target, "")?;
+    scan::entry_for(&target)
+}
+
 /// Render a Markdown file to static preview HTML for its canvas note card
 /// (PR-009). Raw HTML in the source is demoted to text, never interpreted.
 #[tauri::command]
@@ -218,6 +235,21 @@ pub async fn open_item(state: State<'_, AppState>, path: String) -> AppResult<()
         ));
     }
     Ok(())
+}
+
+/// Import pasted clipboard images as real files in the destination
+/// directory (RCA: pasted-images-not-persisting). Bytes are validated by
+/// signature, written no-clobber, and reconciled into durable items before
+/// returning. Async: payloads can be megabytes and the write path syncs.
+#[tauri::command]
+pub async fn import_clipboard_images(
+    state: State<'_, AppState>,
+    dest_dir: String,
+    images: Vec<import::ClipboardImage>,
+) -> AppResult<import::ClipboardImport> {
+    let root = state.root()?;
+    let dest = paths::ensure_inside(&root, Path::new(&dest_dir))?;
+    import::clipboard_images(&dest, &images)
 }
 
 #[tauri::command]
