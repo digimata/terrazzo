@@ -365,8 +365,9 @@ export default function DocumentView({
             syntaxHighlighting(highlight),
             blockquoteLines,
             // Without drawSelection the browser draws the caret natively —
-            // caretColor applies but width/height rules never do.
-            drawSelection(),
+            // caretColor applies but width/height rules never do. No caret
+            // at the head of a non-empty selection (native macOS feel).
+            drawSelection({ drawRangeCursor: false }),
             EditorView.lineWrapping,
             theme,
             concealCompartment.current.of(
