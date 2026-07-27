@@ -82,6 +82,7 @@ function shapeFor(item: CanvasItem, place: () => { x: number; y: number }) {
       name: item.entry.name,
       kind: item.entry.kind,
       path: item.entry.path,
+      missing: item.missing,
     },
   };
 }
@@ -145,7 +146,8 @@ export default function CanvasView({
    * as layout changes. */
   async function fillThumbnails(editor: Editor, items: CanvasItem[]) {
     const queue = items.filter(
-      (i) => i.entry.kind === "image" || i.entry.kind === "video",
+      (i) =>
+        !i.missing && (i.entry.kind === "image" || i.entry.kind === "video"),
     );
     const worker = async () => {
       for (let item = queue.shift(); item; item = queue.shift()) {
@@ -228,13 +230,21 @@ export default function CanvasView({
           }
         } else if (
           shape.props.path !== item.entry.path ||
-          shape.props.name !== item.entry.name
+          shape.props.name !== item.entry.name ||
+          shape.props.missing !== item.missing
         ) {
           editor.updateShapes<ItemShape>([
             {
               id: shapeId,
               type: "item",
-              props: { name: item.entry.name, path: item.entry.path },
+              props: {
+                name: item.entry.name,
+                path: item.entry.path,
+                missing: item.missing,
+                // A stale preview must not survive on a tombstone; when the
+                // file returns, fillThumbnails below re-delivers.
+                ...(item.missing ? { thumbnail: "" } : {}),
+              },
             },
           ]);
         }
@@ -290,6 +300,7 @@ export default function CanvasView({
 
   function openSelection(editor: Editor) {
     for (const shape of selectedItems(editor)) {
+      if (shape.props.missing) continue;
       openItem(shape.props.path).catch((e) =>
         setStatus(`open failed: ${JSON.stringify(e)}`),
       );
@@ -428,6 +439,7 @@ export default function CanvasView({
           editorRef.current = editor;
           const util = editor.getShapeUtil("item") as ItemShapeUtil;
           util.onOpen = (shape) => {
+            if (shape.props.missing) return; // nothing to open behind a tombstone
             if (shape.props.kind === "dir") {
               onEnterDirectory(shape.props.path);
             } else if (

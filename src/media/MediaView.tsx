@@ -53,8 +53,8 @@ export default function MediaView({
     openDirectory(directoryPath).then((items) => {
       if (!alive) return;
       const found = items.find((i) => i.id === itemId) ?? null;
-      setItem(found);
-      if (!found) onClose(); // file vanished under us — back to the canvas
+      setItem(found && !found.missing ? found : null);
+      if (!found || found.missing) onClose(); // vanished under us — back to canvas
     });
     return () => {
       alive = false;

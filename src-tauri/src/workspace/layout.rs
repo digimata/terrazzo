@@ -84,10 +84,14 @@ pub struct Frame {
 #[serde(rename_all = "camelCase")]
 pub struct CanvasItem {
     pub id: String,
+    /// For a tombstone this is synthesized from the layout entry's last-known
+    /// state — the file itself is gone.
     pub entry: FileEntry,
     pub frame: Option<Frame>,
     pub rotation: f64,
     pub z_index: i64,
+    /// PR-022 tombstone: the layout entry no longer resolves to a file.
+    pub missing: bool,
 }
 
 /// A frontend layout mutation for one item. Mirrored by `LayoutDelta` in
@@ -216,6 +220,35 @@ pub fn open_directory(dir: &Path) -> AppResult<Vec<CanvasItem>> {
         write(dir, &layout)?;
     }
 
+    // Unmatched layout entries are tombstones (PR-022): rendered from their
+    // last-known state, never silently omitted. They resolve back to live
+    // items automatically when the file returns (pass 1/2 rescue).
+    let tombstones: Vec<CanvasItem> = layout
+        .items
+        .iter()
+        .filter(|(id, _)| !matched.contains_key(*id))
+        .map(|(id, item)| {
+            let path = dir.join(&item.path);
+            CanvasItem {
+                id: id.clone(),
+                entry: FileEntry {
+                    name: item.path.clone(),
+                    kind: scan::classify(&path),
+                    path: path.to_string_lossy().to_string(),
+                    device: item.last_seen.device,
+                    inode: item.last_seen.inode,
+                    size: item.last_seen.size,
+                    mtime_ns: item.last_seen.mtime_ns.clone(),
+                    is_dir: false,
+                },
+                frame: item.frame.clone(),
+                rotation: item.rotation,
+                z_index: item.z_index,
+                missing: true,
+            }
+        })
+        .collect();
+
     let mut out: Vec<CanvasItem> = matched
         .into_iter()
         .map(|(id, entry)| {
@@ -226,8 +259,10 @@ pub fn open_directory(dir: &Path) -> AppResult<Vec<CanvasItem>> {
                 frame: item.frame.clone(),
                 rotation: item.rotation,
                 z_index: item.z_index,
+                missing: false,
             }
         })
+        .chain(tombstones)
         .collect();
     out.sort_by(|a, b| a.z_index.cmp(&b.z_index).then(a.id.cmp(&b.id)));
     Ok(out)
@@ -250,6 +285,14 @@ pub fn trash_items(dir: &Path, ids: &[String]) -> AppResult<()> {
             continue;
         };
         let target = dir.join(&item.path);
+        // Tombstone dismissal: the file is already gone, so "trash" degrades
+        // to dropping the record. symlink_metadata so a broken symlink still
+        // counts as present and goes through the real Trash.
+        if target.symlink_metadata().is_err() {
+            layout.items.remove(id);
+            changed = true;
+            continue;
+        }
         if let Err(e) = trash::delete(&target) {
             first_err.get_or_insert_with(|| {
                 AppError::new(

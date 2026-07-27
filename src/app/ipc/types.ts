@@ -36,6 +36,9 @@ export interface CanvasItem {
   frame: Frame | null;
   rotation: number;
   zIndex: number;
+  /** PR-022 tombstone: the layout entry no longer resolves to a file;
+   * `entry` is synthesized from its last-known state. */
+  missing: boolean;
 }
 
 /** Mirrors `workspace::layout::LayoutDelta` — one item's layout mutation. */

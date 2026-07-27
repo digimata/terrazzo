@@ -30,6 +30,9 @@ export interface ItemShapeProps {
   /** Asset-protocol URL of the rendered preview (image thumbnail or video
    * poster frame). Empty until the thumbnail queue delivers (PR-014). */
   thumbnail: string;
+  /** PR-022 tombstone: the file no longer resolves. The card stays visible
+   * and labeled, keeps its frame, and can be dismissed via Move to Trash. */
+  missing: boolean;
 }
 
 declare module "@tldraw/tlschema" {
@@ -88,6 +91,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     kind: kindValidator,
     path: T.string,
     thumbnail: T.string,
+    missing: T.boolean,
   };
 
   override getDefaultProps(): ItemShape["props"] {
@@ -98,6 +102,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       kind: "other",
       path: "",
       thumbnail: "",
+      missing: false,
     };
   }
 
@@ -118,7 +123,49 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   }
 
   override component(shape: ItemShape) {
-    const { name, kind, thumbnail } = shape.props;
+    const { name, kind, thumbnail, missing } = shape.props;
+
+    if (missing) {
+      return (
+        <HTMLContainer
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            padding: 10,
+            borderRadius: 8,
+            background: "#1a1d26",
+            border: "1px dashed #565f89",
+            overflow: "hidden",
+            pointerEvents: "all",
+            opacity: 0.7,
+          }}
+        >
+          <span
+            style={{
+              font: "600 10px/1 ui-monospace, monospace",
+              letterSpacing: "0.08em",
+              color: "#f7768e",
+            }}
+          >
+            MISSING
+          </span>
+          <span
+            style={{
+              font: "12px/1.4 -apple-system, system-ui, sans-serif",
+              color: "#8a8fa3",
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical",
+              wordBreak: "break-all",
+            }}
+          >
+            {name}
+          </span>
+        </HTMLContainer>
+      );
+    }
 
     if (thumbnail) {
       return (
