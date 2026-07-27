@@ -136,6 +136,18 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     return fixedSize(shape.props.kind) === null;
   }
 
+  /** Selection outline follows the card's corner radius (the default rect
+   * cuts straight across a note's rounded corners). */
+  override indicator(shape: ItemShape) {
+    return (
+      <rect
+        width={shape.props.w}
+        height={shape.props.h}
+        rx={shape.props.kind === "markdown" ? 24 : 0}
+      />
+    );
+  }
+
   override onResize(shape: ItemShape, info: TLResizeInfo<ItemShape>) {
     return resizeBox(shape, info);
   }
@@ -194,6 +206,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
           style={{
             overflow: "hidden",
             borderRadius: 24, // Spatial's soft card corner — notes only
+            border: "1px solid #2c2c35",
             pointerEvents: "all",
           }}
         >

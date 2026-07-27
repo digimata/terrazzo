@@ -107,3 +107,8 @@
 .note-card img {
   max-width: 100%;
 }
+
+/* Selection feedback: quiet white hairline instead of tldraw's blue. */
+.canvas-root .tl-container {
+  --color-selection-stroke: rgba(230, 233, 239, 0.4);
+}
