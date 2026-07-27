@@ -137,10 +137,9 @@ export default function DocumentView({
   const hostRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
   const concealCompartment = useRef(new Compartment());
-  const [name, setName] = useState("");
-  const [saveState, setSaveState] = useState<"clean" | "dirty" | "saving">(
-    "clean",
-  );
+  // Save state is tracked (the machinery reports through it) but currently
+  // renders nowhere — the topbar went with the chrome.
+  const [, setSaveState] = useState<"clean" | "dirty" | "saving">("clean");
   const [conflict, setConflict] = useState<Conflict | null>(null);
   const [draftOffer, setDraftOffer] = useState<string | null>(null);
   const draftOfferRef = useRef<string | null>(null);
@@ -327,7 +326,6 @@ export default function DocumentView({
       const doc = await readTextFile(path);
       const draft = await readDraft(itemId);
       if (!alive || !hostRef.current) return;
-      setName(item.entry.name);
       fileMtime = doc.mtimeNs;
 
       // A draft newer than the file that differs from it survived a crash
@@ -421,25 +419,11 @@ export default function DocumentView({
 
   useKeymap({ escape: onClose });
 
+  // No chrome: the document IS the view (Spatial). cmd+E still toggles
+  // writing/source, Escape closes; the banners below only appear on
+  // conflict or draft recovery.
   return (
     <div className="doc-root">
-      <div className="doc-topbar">
-        <span className="doc-name">{name}</span>
-        <span className="doc-meta">
-          <button
-            className="doc-view-toggle"
-            title="Toggle writing/source (⌘E)"
-            onClick={() =>
-              onChangeView(viewMode === "writing" ? "source" : "writing")
-            }
-          >
-            {viewMode}
-          </button>
-          <span className="doc-save-state">
-            {conflict ? "conflict" : saveState === "clean" ? "saved" : saveState}
-          </span>
-        </span>
-      </div>
       {conflict && (
         <div className="doc-banner">
           <span className="doc-banner-text">
