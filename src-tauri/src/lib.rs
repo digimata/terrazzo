@@ -19,6 +19,8 @@ pub fn run() {
             commands::ensure_thumbnail,
             commands::import_files,
             commands::move_to_trash,
+            commands::read_text_file,
+            commands::write_text_file,
             commands::open_item
         ])
         .run(tauri::generate_context!())

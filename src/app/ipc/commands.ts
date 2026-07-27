@@ -59,6 +59,18 @@ export function openItem(path: string): Promise<void> {
   return invoke("open_item", { path });
 }
 
+/** Read a text file for document mode (M4). The buffer on disk stays
+ * canonical — the editor holds a copy, never a second source of truth. */
+export function readTextFile(path: string): Promise<string> {
+  return invoke("read_text_file", { path });
+}
+
+/** Atomic save for document mode: temp file + rename, so a crash mid-write
+ * never truncates a note. */
+export function writeTextFile(path: string, contents: string): Promise<void> {
+  return invoke("write_text_file", { path, contents });
+}
+
 /** Copy external files into the workspace (Finder drop). Never moves or
  * overwrites. `destDir` defaults to the workspace root. */
 export function importFiles(

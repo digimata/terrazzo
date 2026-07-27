@@ -47,8 +47,10 @@ function dispatch(e: KeyboardEvent) {
   if (e.key === "Escape") e.preventDefault();
 
   // Typing wins: keys aimed at an editable element never reach the layers,
-  // so a canvas backspace claim can't eat text editing.
-  if (isEditable(e.target)) return;
+  // so a canvas backspace claim can't eat text editing. Escape is the one
+  // exception — it must close document mode even mid-typing (a future Vim
+  // layer overrides that by claiming Escape above the mode's layer).
+  if (isEditable(e.target) && e.key !== "Escape") return;
 
   const combo = normalize(e);
   for (let i = stack.length - 1; i >= 0; i--) {

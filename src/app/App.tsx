@@ -5,6 +5,7 @@ import { useKeyboardDispatcher, useKeymap } from "./hooks/keyboard";
 import StartScreen from "./StartScreen";
 import CanvasView from "../canvas/CanvasView";
 import MediaView from "../media/MediaView";
+import DocumentView from "../document/DocumentView";
 import "./app.css";
 
 export default function App() {
@@ -50,6 +51,18 @@ export default function App() {
           setWorkspace(info);
           setMode({ type: "canvas", directoryPath: info.root });
         }}
+      />
+    );
+  }
+
+  if (mode.type === "document") {
+    return (
+      <DocumentView
+        directoryPath={mode.directoryPath}
+        itemId={mode.itemId}
+        onClose={() =>
+          setMode({ type: "canvas", directoryPath: mode.directoryPath })
+        }
       />
     );
   }
@@ -116,12 +129,21 @@ export default function App() {
             key={mode.directoryPath}
             directoryPath={mode.directoryPath}
             onEnterDirectory={navigate}
-            onOpenItem={(itemId) =>
-              setMode({
-                type: "media",
-                itemId,
-                directoryPath: mode.directoryPath,
-              })
+            onOpenItem={(itemId, kind) =>
+              setMode(
+                kind === "markdown"
+                  ? {
+                      type: "document",
+                      itemId,
+                      directoryPath: mode.directoryPath,
+                      view: "source",
+                    }
+                  : {
+                      type: "media",
+                      itemId,
+                      directoryPath: mode.directoryPath,
+                    },
+              )
             }
           />
         </div>

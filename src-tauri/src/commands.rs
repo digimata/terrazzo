@@ -94,6 +94,28 @@ pub async fn ensure_thumbnail(
     Ok(out.to_string_lossy().to_string())
 }
 
+/// Read a text file for document mode (M4). The `.md` buffer on disk stays
+/// canonical — the editor holds a copy, never a second source of truth.
+#[tauri::command]
+pub async fn read_text_file(state: State<'_, AppState>, path: String) -> AppResult<String> {
+    let root = state.root()?;
+    let target = paths::ensure_inside(&root, Path::new(&path))?;
+    Ok(std::fs::read_to_string(&target)?)
+}
+
+/// Atomic save for document mode: temp file + rename, same discipline as
+/// the sidecars, so a crash mid-write never truncates a note.
+#[tauri::command]
+pub async fn write_text_file(
+    state: State<'_, AppState>,
+    path: String,
+    contents: String,
+) -> AppResult<()> {
+    let root = state.root()?;
+    let target = paths::ensure_inside(&root, Path::new(&path))?;
+    sidecar::write_atomic(&target, contents.as_bytes())
+}
+
 /// Move items to the system Trash (v0 §4.5). Async: Trash goes through
 /// NSFileManager on macOS — keep disk work off the main thread.
 #[tauri::command]

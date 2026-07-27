@@ -22,7 +22,7 @@ import {
 } from "../app/ipc/commands";
 import { useKeymap } from "../app/hooks/keyboard";
 import { onFsEvent } from "../app/ipc/events";
-import type { CanvasItem, LayoutDelta } from "../app/ipc/types";
+import type { CanvasItem, FileKind, LayoutDelta } from "../app/ipc/types";
 import {
   ITEM_H,
   ITEM_W,
@@ -94,7 +94,7 @@ export default function CanvasView({
 }: {
   directoryPath: string;
   onEnterDirectory: (path: string) => void;
-  onOpenItem: (itemId: string) => void;
+  onOpenItem: (itemId: string, kind: FileKind) => void;
 }) {
   const editorRef = useRef<Editor | null>(null);
   const knownIds = useRef<Set<string>>(new Set());
@@ -444,9 +444,10 @@ export default function CanvasView({
               onEnterDirectory(shape.props.path);
             } else if (
               shape.props.kind === "image" ||
-              shape.props.kind === "video"
+              shape.props.kind === "video" ||
+              shape.props.kind === "markdown"
             ) {
-              onOpenItem(itemIdFor(shape.id));
+              onOpenItem(itemIdFor(shape.id), shape.props.kind);
             }
           };
           hydrate(editor);
