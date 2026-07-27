@@ -62,7 +62,9 @@ const theme = EditorView.theme(
     ".cm-content": {
       fontFamily: "-apple-system, 'SF Pro Text', system-ui, sans-serif",
       lineHeight: "1.7",
-      padding: "48px 0 45vh",
+      // Generous head-room — the topbar is gone, so the document floats
+      // well clear of the window edge (roomy, Spatial-like).
+      padding: "15vh 0 45vh",
       caretColor: "#b5d6fb",
     },
     ".cm-line": { padding: "0 4px" },
