@@ -56,7 +56,16 @@ function build(view: EditorView): DecorationSet {
   return Decoration.set(ranges, true);
 }
 
-const quoteLine = Decoration.line({ class: "cm-blockquote" });
+// First/last lines carry extra classes so the bar (a ::before strip) can
+// inset at the block's edges while staying continuous across the middle.
+const quoteLines = {
+  only: Decoration.line({
+    class: "cm-blockquote cm-blockquote-first cm-blockquote-last",
+  }),
+  first: Decoration.line({ class: "cm-blockquote cm-blockquote-first" }),
+  last: Decoration.line({ class: "cm-blockquote cm-blockquote-last" }),
+  middle: Decoration.line({ class: "cm-blockquote" }),
+};
 
 function buildQuotes(view: EditorView): DecorationSet {
   const ranges: Range<Decoration>[] = [];
@@ -68,15 +77,21 @@ function buildQuotes(view: EditorView): DecorationSet {
       to,
       enter: (node) => {
         if (node.name !== "Blockquote") return;
-        for (
-          let pos = node.from;
-          pos <= node.to && pos <= state.doc.length;
-
-        ) {
+        const firstLine = state.doc.lineAt(node.from).from;
+        const lastLine = state.doc.lineAt(Math.min(node.to, state.doc.length)).from;
+        for (let pos = node.from; pos <= node.to && pos <= state.doc.length; ) {
           const line = state.doc.lineAt(pos);
           if (!seen.has(line.from)) {
             seen.add(line.from);
-            ranges.push(quoteLine.range(line.from));
+            const deco =
+              line.from === firstLine && line.from === lastLine
+                ? quoteLines.only
+                : line.from === firstLine
+                  ? quoteLines.first
+                  : line.from === lastLine
+                    ? quoteLines.last
+                    : quoteLines.middle;
+            ranges.push(deco.range(line.from));
           }
           pos = line.to + 1;
         }

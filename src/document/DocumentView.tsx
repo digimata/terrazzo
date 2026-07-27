@@ -80,11 +80,24 @@ const theme = EditorView.theme(
       backgroundColor: "#2e2e38",
     },
     ".cm-scroller": { overflow: "auto" },
+    // Zed-style quote bar: a flat 4px strip, continuous across the block,
+    // inset a few px at the block's first and last line. No rounding.
     ".cm-blockquote": {
-      borderLeft: "2px solid #565f89",
-      paddingLeft: "16px",
+      position: "relative",
+      paddingLeft: "20px",
       color: "#a8adb8",
     },
+    ".cm-blockquote::before": {
+      content: "''",
+      position: "absolute",
+      left: "4px",
+      top: "0",
+      bottom: "0",
+      width: "4px",
+      background: "#3d3d49",
+    },
+    ".cm-blockquote-first::before": { top: "4px" },
+    ".cm-blockquote-last::before": { bottom: "4px" },
   },
   { dark: true },
 );
