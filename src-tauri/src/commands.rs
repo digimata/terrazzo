@@ -95,6 +95,25 @@ pub async fn ensure_thumbnail(
     Ok(out.to_string_lossy().to_string())
 }
 
+/// Create a new folder ("Space") inside a directory. Names are collision-
+/// safe: Untitled, Untitled 2, … — never overwrites, never errors on a
+/// taken name. Returns the created entry; the watcher's event drives the
+/// canvas reconcile that places its card.
+#[tauri::command]
+pub fn create_folder(state: State<AppState>, parent: String) -> AppResult<scan::FileEntry> {
+    let root = state.root()?;
+    let dir = paths::ensure_inside(&root, Path::new(&parent))?;
+    let mut name = String::from("Untitled");
+    let mut n = 1;
+    while dir.join(&name).exists() {
+        n += 1;
+        name = format!("Untitled {n}");
+    }
+    let target = dir.join(&name);
+    std::fs::create_dir(&target)?;
+    scan::entry_for(&target)
+}
+
 /// Render a Markdown file to static preview HTML for its canvas note card
 /// (PR-009). Raw HTML in the source is demoted to text, never interpreted.
 #[tauri::command]

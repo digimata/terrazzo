@@ -29,6 +29,12 @@ export function openDirectory(path: string): Promise<DirectoryView> {
   return invoke("open_directory", { path });
 }
 
+/** Create a new folder ("Space") inside a directory; names are
+ * collision-safe (Untitled, Untitled 2, …). */
+export function createFolder(parent: string): Promise<FileEntry> {
+  return invoke("create_folder", { parent });
+}
+
 /** Render a Markdown file to static preview HTML for its canvas note card
  * (PR-009). Raw HTML in the source is stripped Rust-side. */
 export function renderMarkdown(path: string): Promise<string> {

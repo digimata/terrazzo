@@ -18,6 +18,7 @@ pub fn run() {
             commands::rescan,
             commands::ensure_thumbnail,
             commands::render_markdown,
+            commands::create_folder,
             commands::import_files,
             commands::move_to_trash,
             commands::read_text_file,

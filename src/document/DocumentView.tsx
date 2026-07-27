@@ -73,8 +73,8 @@ const theme = EditorView.theme(
       // CodeMirror sets the caret's height inline per line; padding extends
       // the border past it so the caret overshoots the text a little on
       // both ends without fighting the inline style.
-      marginTop: "-2px",
-      paddingBottom: "4px",
+      marginTop: "-4px",
+      paddingBottom: "7px",
     },
     ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
       backgroundColor: "#2e2e38",

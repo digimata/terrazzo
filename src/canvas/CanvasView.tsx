@@ -17,6 +17,7 @@ import {
   ensureThumbnail,
   importFiles,
   moveToTrash,
+  createFolder,
   openDirectory,
   openItem,
   renderMarkdown,
@@ -46,6 +47,7 @@ const components = {
   StylePanel: null,
   Toolbar: null,
   NavigationPanel: null, // zoom controls + minimap cluster, bottom left
+  MenuPanel: null, // hamburger + page menu, top left — ours below instead
   InFrontOfTheCanvas: SelectionDimensions, // Figma's W × H pill
 };
 
@@ -527,6 +529,17 @@ export default function CanvasView({
           hydrate(editor);
         }}
       />
+      <button
+        className="canvas-new-space"
+        title="New Space"
+        onClick={() =>
+          createFolder(directoryPath).catch((e) =>
+            setStatus(`new space failed: ${JSON.stringify(e)}`),
+          )
+        }
+      >
+        + New Space
+      </button>
       <div className="canvas-status">{status}</div>
     </div>
   );
