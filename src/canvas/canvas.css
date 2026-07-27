@@ -152,5 +152,5 @@
 }
 
 .canvas-root .card-grow:hover {
-  transform: scale(1.015);
+  transform: scale(var(--grow-scale, 1.015));
 }

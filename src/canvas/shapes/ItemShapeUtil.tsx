@@ -272,9 +272,18 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       );
     }
 
+    // Hover grow caps in absolute pixels: a flat 1.5% swells a 2400px-tall
+    // screenshot 10x more than a folder, so big cards ease the factor down.
+    const growScale =
+      1 + Math.min(0.015, 8 / Math.max(shape.props.w, shape.props.h));
+    const grow = { "--grow-scale": `${growScale}` } as React.CSSProperties;
+
     if (kind === "dir") {
       return (
-        <HTMLContainer className="card-grow" style={{ pointerEvents: "all" }}>
+        <HTMLContainer
+          className="card-grow"
+          style={{ pointerEvents: "all", ...grow }}
+        >
           <FolderCard name={name} count={shape.props.childCount} />
         </HTMLContainer>
       );
@@ -293,6 +302,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
             borderRadius: 24, // Spatial's soft card corner — notes only
             border: "1px solid #1d1d20",
             pointerEvents: "all",
+            ...grow,
           }}
         >
           <div
@@ -318,6 +328,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
             overflow: "hidden",
             background: "#1f2430",
             pointerEvents: "all",
+            ...grow,
           }}
         >
           <img
