@@ -27,7 +27,11 @@ import {
   historyKeymap,
   indentWithTab,
 } from "@codemirror/commands";
-import { syntaxHighlighting, HighlightStyle } from "@codemirror/language";
+import {
+  syntaxHighlighting,
+  syntaxTree,
+  HighlightStyle,
+} from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import {
   deleteDraft,
@@ -39,7 +43,7 @@ import {
 } from "../app/ipc/commands";
 import type { FsEvent } from "../app/ipc/types";
 import { useKeymap } from "../app/hooks/keyboard";
-import { blockquoteLines, conceal, hrLines, emDashes } from "./conceal";
+import { blockquoteLines, conceal, hrLines } from "./conceal";
 import "./document.css";
 
 export type DocumentViewMode = "writing" | "source";
@@ -376,6 +380,21 @@ export default function DocumentView({
               indentWithTab,
             ]),
             markdown({ base: markdownLanguage }),
+            // -- means em dash: the second hyphen collapses the pair into —
+            // in the buffer itself (not a display trick). Code spans and
+            // blocks are exempt — CLI flags stay two hyphens.
+            EditorView.inputHandler.of((v, from, to, text) => {
+              if (text !== "-" || from !== to) return false;
+              if (v.state.sliceDoc(from - 1, from) !== "-") return false;
+              if (/Code/.test(syntaxTree(v.state).resolveInner(from, -1).name))
+                return false;
+              v.dispatch({
+                changes: { from: from - 1, to, insert: "—" },
+                selection: { anchor: from },
+                userEvent: "input.type",
+              });
+              return true;
+            }),
             syntaxHighlighting(highlight),
             blockquoteLines,
             // Without drawSelection the browser draws the caret natively —
@@ -384,7 +403,7 @@ export default function DocumentView({
             EditorView.lineWrapping,
             theme,
             concealCompartment.current.of(
-              viewModeRef.current === "writing" ? [conceal, hrLines, emDashes] : [],
+              viewModeRef.current === "writing" ? [conceal, hrLines] : [],
             ),
             EditorView.updateListener.of((update) => {
               if (!update.docChanged || applyingExternal || !view) return;
@@ -431,7 +450,7 @@ export default function DocumentView({
   useEffect(() => {
     editorRef.current?.dispatch({
       effects: concealCompartment.current.reconfigure(
-        viewMode === "writing" ? [conceal, hrLines, emDashes] : [],
+        viewMode === "writing" ? [conceal, hrLines] : [],
       ),
     });
   }, [viewMode]);

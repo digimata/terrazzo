@@ -10,7 +10,6 @@ import {
   EditorView,
   ViewPlugin,
   ViewUpdate,
-  WidgetType,
 } from "@codemirror/view";
 import type { Range } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
@@ -157,59 +156,6 @@ export const hrLines = ViewPlugin.fromClass(
     update(update: ViewUpdate) {
       if (update.docChanged || update.selectionSet || update.viewportChanged) {
         this.decorations = buildHr(update.view);
-      }
-    }
-  },
-  { decorations: (v) => v.decorations },
-);
-
-class EmDashWidget extends WidgetType {
-  toDOM() {
-    const span = document.createElement("span");
-    span.textContent = "—";
-    return span;
-  }
-  override eq() {
-    return true;
-  }
-}
-
-const emDash = Decoration.replace({ widget: new EmDashWidget() });
-
-/** Nodes whose text is verbatim — a -- there means two hyphens. */
-const LITERAL = new Set(["InlineCode", "FencedCode", "CodeBlock", "CodeText"]);
-
-function buildDashes(view: EditorView): DecorationSet {
-  const ranges: Range<Decoration>[] = [];
-  const state = view.state;
-  const sel = state.selection.main;
-  const tree = syntaxTree(state);
-  for (const { from, to } of view.visibleRanges) {
-    const text = state.sliceDoc(from, to);
-    // Exactly two hyphens: longer runs are rules, front-matter fences, or
-    // deliberate typography, and stay as typed.
-    for (const m of text.matchAll(/(?<!-)--(?!-)/g)) {
-      const pos = from + m.index;
-      const line = state.doc.lineAt(pos);
-      if (sel.from <= line.to && sel.to >= line.from) continue;
-      if (LITERAL.has(tree.resolveInner(pos, 1).name)) continue;
-      ranges.push(emDash.range(pos, pos + 2));
-    }
-  }
-  return Decoration.set(ranges, true);
-}
-
-/** Writing-view nicety: -- renders as an em dash. Pure display — the file
- * keeps the two hyphens, and the cursor's line reveals them for editing. */
-export const emDashes = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-      this.decorations = buildDashes(view);
-    }
-    update(update: ViewUpdate) {
-      if (update.docChanged || update.selectionSet || update.viewportChanged) {
-        this.decorations = buildDashes(update.view);
       }
     }
   },
