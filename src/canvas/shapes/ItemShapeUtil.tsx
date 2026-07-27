@@ -215,6 +215,14 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     return fixedSize(shape.props.kind) === null;
   }
 
+  /** Figma's default: media resizes keep aspect ratio; hold cmd to deform
+   * freely. The session samples this at resize start, so cmd must be down
+   * when grabbing the handle (mid-drag toggling isn't wired in tldraw). */
+  override isAspectRatioLocked() {
+    // tldraw normalizes cmd into ctrlKey on its inputs.
+    return !this.editor.inputs.getCtrlKey();
+  }
+
   /** Square selection outline (tldraw's v5 default indicator rounds its
    * corners). Notes get none at all — a single click opens them, so a
    * selection ring would only flash before the document covers it. */
