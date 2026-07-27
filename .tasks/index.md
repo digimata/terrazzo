@@ -26,7 +26,7 @@ _Scheduled this cycle, not today_
 
 _(none)_
 
-## Backlog (6)
+## Backlog (7)
 
 _Future work; not scheduled into a cycle yet._
 
@@ -38,6 +38,7 @@ _Future work; not scheduled into a cycle yet._
 | [TRZ-0009](T-0009.md) | Replace the video VID badge with a centered play overlay | 4 |
 | [TRZ-0010](T-0010.md) | Render Markdown tables in the document writing view | 2 |
 | [TRZ-0012](T-0012.md) | Fix consecutive canvas drag targeting | 1 |
+| [TRZ-0014](T-0014.md) | Persist pasted clipboard images as filesystem-backed cards | 1 |
 
 ## Parked (0)
 

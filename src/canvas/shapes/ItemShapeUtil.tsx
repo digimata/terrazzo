@@ -16,7 +16,6 @@ import {
   TLBaseShape,
   TLResizeInfo,
   resizeBox,
-  useValue,
 } from "tldraw";
 import type { FileKind } from "../../app/ipc/types";
 
@@ -255,13 +254,13 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     const { name, kind, thumbnail, note, missing } = shape.props;
 
     // Cards hold the hover grow while selected (Spatial's pattern) — the
-    // selection overlays in selection.tsx scale by the same factor. Hook
-    // runs before the missing early-return (rules of hooks).
-    const isSelected = useValue(
-      "item-selected",
-      () => this.editor.getSelectedShapeIds().includes(shape.id),
-      [shape.id],
-    );
+    // selection overlays in selection.tsx scale by the same factor. The
+    // selection signal is read directly (not via useValue): tldraw renders
+    // component() inside useStateTracking, which only re-runs on changes to
+    // signals captured in THIS call — a useValue-wrapped read hides the
+    // signal in its own computed and a pure selection change (marquee,
+    // shift-click) never re-renders the memoized shape.
+    const isSelected = this.editor.getSelectedShapeIds().includes(shape.id);
 
     if (missing) {
       return (
