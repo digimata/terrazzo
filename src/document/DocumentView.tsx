@@ -39,7 +39,7 @@ import {
 } from "../app/ipc/commands";
 import type { FsEvent } from "../app/ipc/types";
 import { useKeymap } from "../app/hooks/keyboard";
-import { conceal } from "./conceal";
+import { blockquoteLines, conceal } from "./conceal";
 import "./document.css";
 
 export type DocumentViewMode = "writing" | "source";
@@ -80,6 +80,11 @@ const theme = EditorView.theme(
       backgroundColor: "#2e2e38",
     },
     ".cm-scroller": { overflow: "auto" },
+    ".cm-blockquote": {
+      borderLeft: "2px solid #565f89",
+      paddingLeft: "16px",
+      color: "#a8adb8",
+    },
   },
   { dark: true },
 );
@@ -345,6 +350,7 @@ export default function DocumentView({
             ]),
             markdown({ base: markdownLanguage }),
             syntaxHighlighting(highlight),
+            blockquoteLines,
             EditorView.lineWrapping,
             theme,
             concealCompartment.current.of(

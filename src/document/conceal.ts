@@ -56,6 +56,57 @@ function build(view: EditorView): DecorationSet {
   return Decoration.set(ranges, true);
 }
 
+const quoteLine = Decoration.line({ class: "cm-blockquote" });
+
+function buildQuotes(view: EditorView): DecorationSet {
+  const ranges: Range<Decoration>[] = [];
+  const state = view.state;
+  const seen = new Set<number>();
+  for (const { from, to } of view.visibleRanges) {
+    syntaxTree(state).iterate({
+      from,
+      to,
+      enter: (node) => {
+        if (node.name !== "Blockquote") return;
+        for (
+          let pos = node.from;
+          pos <= node.to && pos <= state.doc.length;
+
+        ) {
+          const line = state.doc.lineAt(pos);
+          if (!seen.has(line.from)) {
+            seen.add(line.from);
+            ranges.push(quoteLine.range(line.from));
+          }
+          pos = line.to + 1;
+        }
+      },
+    });
+  }
+  return Decoration.set(
+    ranges.sort((a, b) => a.from - b.from),
+    true,
+  );
+}
+
+/** Blockquote lines get a left rule + inset (styled in the editor theme).
+ * A line decoration, not a text style — italics alone don't read as a
+ * quote. Active in both views; the writing view just also hides the >. */
+export const blockquoteLines = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+    constructor(view: EditorView) {
+      this.decorations = buildQuotes(view);
+    }
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = buildQuotes(update.view);
+      }
+    }
+  },
+  { decorations: (v) => v.decorations },
+);
+
 export const conceal = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
