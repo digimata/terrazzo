@@ -38,6 +38,7 @@ const shapeUtils = [ItemShapeUtil];
 const components = {
   StylePanel: null,
   Toolbar: null,
+  NavigationPanel: null, // zoom controls + minimap cluster, bottom left
 };
 
 const GAP = 32;
