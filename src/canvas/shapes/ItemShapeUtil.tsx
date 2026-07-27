@@ -291,7 +291,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
           style={{
             overflow: "hidden",
             borderRadius: 24, // Spatial's soft card corner — notes only
-            border: "1px solid #2c2c35",
+            border: "1px solid #2b2e2f", // same stroke as the folder card
             pointerEvents: "all",
           }}
         >
