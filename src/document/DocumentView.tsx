@@ -37,7 +37,7 @@ const theme = EditorView.theme(
       fontSize: "15px",
     },
     ".cm-content": {
-      fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+      fontFamily: "-apple-system, 'SF Pro Text', system-ui, sans-serif",
       lineHeight: "1.7",
       padding: "48px 0 45vh",
       caretColor: "#7aa2f7",
@@ -63,7 +63,12 @@ const highlight = HighlightStyle.define([
   { tag: tags.emphasis, color: "#e6e9ef", fontStyle: "italic" },
   { tag: tags.link, color: "#9ece6a" },
   { tag: tags.url, color: "#565f89" },
-  { tag: tags.monospace, color: "#bb9af7" },
+  {
+    tag: tags.monospace,
+    color: "#bb9af7",
+    fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
+    fontSize: "0.9em",
+  },
   { tag: tags.quote, color: "#8a8fa3" },
   { tag: tags.list, color: "#e0af68" },
   { tag: tags.meta, color: "#565f89" },
