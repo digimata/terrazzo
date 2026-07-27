@@ -380,23 +380,24 @@ export default function DocumentView({
               indentWithTab,
             ]),
             markdown({ base: markdownLanguage }),
-            // Typography input rules: the closing keystroke collapses the
-            // pair into the real character in the buffer itself (not a
-            // display trick). Code spans and blocks are exempt — CLI flags
-            // and ASCII arrows in code stay as typed.
+            // Typography input rules, triggered on space like every editor
+            // does it: "-- " becomes "— " in the buffer itself (not a
+            // display trick), and "--- " stays three hyphens because the
+            // longer-run guard skips it — rules remain typeable. Code spans
+            // and blocks are exempt so CLI flags stay as typed.
             EditorView.inputHandler.of((v, from, to, text) => {
               const pairs: Record<string, string> = {
                 "--": "—",
                 "->": "→",
               };
-              if (from !== to) return false;
-              const typed = v.state.sliceDoc(from - 1, from) + text;
-              const glyph = pairs[typed];
+              if (text !== " " || from !== to) return false;
+              const glyph = pairs[v.state.sliceDoc(from - 2, from)];
               if (!glyph) return false;
+              if (v.state.sliceDoc(from - 3, from - 2) === "-") return false;
               if (/Code/.test(syntaxTree(v.state).resolveInner(from, -1).name))
                 return false;
               v.dispatch({
-                changes: { from: from - 1, to, insert: glyph },
+                changes: { from: from - 2, to, insert: `${glyph} ` },
                 selection: { anchor: from },
                 userEvent: "input.type",
               });
