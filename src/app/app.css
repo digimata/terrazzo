@@ -35,8 +35,8 @@ body,
 /* Breadcrumbs float over the canvas, top-left — no bar, no divider. */
 .app-crumbs-float {
   position: absolute;
-  top: 12px;
-  left: 14px;
+  top: 18px;
+  left: 20px;
   z-index: 20;
   display: flex;
   align-items: center;
@@ -80,13 +80,13 @@ body,
 /* Space switcher (Spatial's pattern): pill bottom-right, menu above it. */
 .space-pill {
   position: absolute;
-  left: 16px;
-  bottom: 16px;
+  left: 24px;
+  bottom: 24px;
   z-index: 30;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 18px;
+  gap: 7px;
+  padding: 10px 16px;
   background: #1c1c23;
   color: #8a8f98;
   border: 1px solid #2b2e2f;
@@ -107,8 +107,8 @@ body,
 
 .space-menu {
   position: absolute;
-  left: 16px;
-  bottom: 72px;
+  left: 24px;
+  bottom: 76px;
   z-index: 30;
   min-width: 300px;
   padding: 10px;
@@ -129,7 +129,7 @@ body,
   border-radius: 12px;
   background: transparent;
   color: #71767f;
-  font: 500 14px/1 -apple-system, "SF Pro Text", system-ui, sans-serif;
+  font: 400 14px/1 -apple-system, "SF Pro Text", system-ui, sans-serif;
   cursor: var(--cursor-arrow);
   text-align: left;
 }
@@ -140,7 +140,6 @@ body,
 
 .space-row-current {
   color: #ffffff;
-  font-weight: 600;
 }
 
 .space-row-icon {

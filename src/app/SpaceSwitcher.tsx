@@ -113,10 +113,10 @@ export default function SpaceSwitcher({
         title="Spaces"
         onClick={() => setOpen((v) => !v)}
       >
-        <LayersIcon size={19} />
+        <LayersIcon size={17} />
         <svg
-          width="14"
-          height="14"
+          width="13"
+          height="13"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
