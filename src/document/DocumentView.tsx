@@ -63,11 +63,19 @@ const theme = EditorView.theme(
       fontFamily: "-apple-system, 'SF Pro Text', system-ui, sans-serif",
       lineHeight: "1.7",
       padding: "48px 0 45vh",
-      caretColor: "#e6e9ef",
+      caretColor: "#b5d6fb",
     },
     ".cm-line": { padding: "0 4px" },
     "&.cm-focused": { outline: "none" },
-    "&.cm-focused .cm-cursor": { borderLeftColor: "#e6e9ef" },
+    "&.cm-focused .cm-cursor": {
+      borderLeftColor: "#b5d6fb",
+      borderLeftWidth: "2px",
+      // CodeMirror sets the caret's height inline per line; padding extends
+      // the border past it so the caret overshoots the text a little on
+      // both ends without fighting the inline style.
+      marginTop: "-2px",
+      paddingBottom: "4px",
+    },
     ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
       backgroundColor: "#2e2e38",
     },
