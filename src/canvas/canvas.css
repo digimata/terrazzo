@@ -20,11 +20,11 @@
  * match the document editor's typography. Rendered at NOTE_W design width
  * and scaled to the frame; content is inert (the shape owns the pointer). */
 .note-card {
-  padding: 36px 40px;
+  padding: 72px 48px 48px;
   background: #1c1c23;
   color: #e6e9ef;
   font:
-    15px/1.7 -apple-system,
+    14px/1.8 -apple-system,
     "SF Pro Text",
     system-ui,
     sans-serif;

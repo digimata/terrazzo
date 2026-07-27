@@ -77,9 +77,17 @@ export const ITEM_W = 180;
 export const ITEM_H = 120;
 /** Design width a note card's HTML renders at before scaling to its frame. */
 export const NOTE_W = 440;
-/** Default portrait frame for never-placed Markdown notes. */
-export const NOTE_CARD_W = 200;
-export const NOTE_CARD_H = 260;
+/** Fixed portrait frame for Markdown notes (Spatial's card proportions).
+ * Notes and folders are not resizable — one canonical card size each. */
+export const NOTE_CARD_W = 260;
+export const NOTE_CARD_H = 344;
+
+/** Fixed frame for the kind, or null if the kind is freely resizable. */
+export function fixedSize(kind: FileKind) {
+  if (kind === "markdown") return { width: NOTE_CARD_W, height: NOTE_CARD_H };
+  if (kind === "dir") return { width: ITEM_W, height: ITEM_H };
+  return null;
+}
 
 export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   static override type = "item" as const;
@@ -124,8 +132,8 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     });
   }
 
-  override canResize() {
-    return true;
+  override canResize(shape: ItemShape) {
+    return fixedSize(shape.props.kind) === null;
   }
 
   override onResize(shape: ItemShape, info: TLResizeInfo<ItemShape>) {
@@ -183,7 +191,11 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       const scale = shape.props.w / NOTE_W;
       return (
         <HTMLContainer
-          style={{ overflow: "hidden", pointerEvents: "all" }}
+          style={{
+            overflow: "hidden",
+            borderRadius: 24, // Spatial's soft card corner — notes only
+            pointerEvents: "all",
+          }}
         >
           <div
             className="note-card"

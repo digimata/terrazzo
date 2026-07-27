@@ -28,9 +28,9 @@ import {
   ITEM_H,
   ITEM_W,
   NOTE_CARD_H,
-  NOTE_CARD_W,
   ItemShape,
   ItemShapeUtil,
+  fixedSize,
 } from "./shapes/ItemShapeUtil";
 import "./canvas.css";
 
@@ -86,14 +86,15 @@ function makePlacer(items: CanvasItem[]) {
   });
 }
 
-function defaultSize(item: CanvasItem) {
-  return item.entry.kind === "markdown"
-    ? { width: NOTE_CARD_W, height: NOTE_CARD_H }
-    : { width: ITEM_W, height: ITEM_H };
-}
-
 function shapeFor(item: CanvasItem, place: () => { x: number; y: number }) {
-  const frame = item.frame ?? { ...place(), ...defaultSize(item) };
+  // Notes and folders have one canonical card size; a stored frame keeps
+  // its position but its dimensions are normalized (sizes persisted before
+  // these kinds became fixed-size would otherwise stick forever).
+  const fixed = fixedSize(item.entry.kind);
+  const frame = item.frame ?? {
+    ...place(),
+    ...(fixed ?? { width: ITEM_W, height: ITEM_H }),
+  };
   return {
     id: shapeIdFor(item.id),
     type: "item" as const,
@@ -101,8 +102,8 @@ function shapeFor(item: CanvasItem, place: () => { x: number; y: number }) {
     y: frame.y,
     rotation: item.rotation,
     props: {
-      w: frame.width,
-      h: frame.height,
+      w: fixed?.width ?? frame.width,
+      h: fixed?.height ?? frame.height,
       name: item.entry.name,
       kind: item.entry.kind,
       path: item.entry.path,
