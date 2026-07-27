@@ -16,6 +16,7 @@ import {
   TLBaseShape,
   TLResizeInfo,
   resizeBox,
+  useValue,
 } from "tldraw";
 import type { FileKind } from "../../app/ipc/types";
 
@@ -150,6 +151,14 @@ export const NOTE_CARD_H = 364;
 export const DIR_W = 340;
 export const DIR_H = 270;
 
+/** Hover/selected grow factor, capped in absolute pixels: a flat 1.5%
+ * swells a 2400px-tall screenshot 10x more than a folder, so big cards
+ * ease the factor down. Shared with the selection ring so a grown door's
+ * silhouette stroke still hugs its edge. */
+export function growScaleFor(w: number, h: number) {
+  return 1 + Math.min(0.015, 8 / Math.max(w, h));
+}
+
 /** Fixed frame for the kind, or null if the kind is freely resizable. */
 export function fixedSize(kind: FileKind) {
   if (kind === "markdown") return { width: NOTE_CARD_W, height: NOTE_CARD_H };
@@ -239,6 +248,15 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   override component(shape: ItemShape) {
     const { name, kind, thumbnail, note, missing } = shape.props;
 
+    // Doors hold the hover grow while selected (Spatial's pattern) — the
+    // silhouette ring scales to match in SelectionOnlyIndicator. Hook runs
+    // before the missing early-return (rules of hooks).
+    const isSelected = useValue(
+      "item-selected",
+      () => this.editor.getSelectedShapeIds().includes(shape.id),
+      [shape.id],
+    );
+
     if (missing) {
       return (
         <HTMLContainer
@@ -280,16 +298,16 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       );
     }
 
-    // Hover grow caps in absolute pixels: a flat 1.5% swells a 2400px-tall
-    // screenshot 10x more than a folder, so big cards ease the factor down.
-    const growScale =
-      1 + Math.min(0.015, 8 / Math.max(shape.props.w, shape.props.h));
+    const growScale = growScaleFor(shape.props.w, shape.props.h);
     const grow = { "--grow-scale": `${growScale}` } as React.CSSProperties;
+    // Selected doors pin the grow; media stays hover-only (its selection box
+    // and handles are drawn at rest bounds and must hug the pixels).
+    const doorGrow = isSelected ? "card-grow card-grown" : "card-grow";
 
     if (kind === "dir") {
       return (
         <HTMLContainer
-          className="card-grow"
+          className={doorGrow}
           style={{ pointerEvents: "all", ...grow }}
         >
           <FolderCard name={name} count={shape.props.childCount} />
@@ -304,7 +322,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       const scale = shape.props.w / NOTE_W;
       return (
         <HTMLContainer
-          className="card-grow"
+          className={doorGrow}
           style={{
             overflow: "hidden",
             borderRadius: 24, // Spatial's soft card corner — notes only

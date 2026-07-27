@@ -7,5 +7,6 @@ An idea does not change the PRD, v0 scope, architecture, or implementation plan.
 | Idea | Status | Area |
 | --- | --- | --- |
 | [IDEA-0001 — Default workspace, workspace switcher, and CLI](idea-0001.md) | provisional | Launch and workspace management |
+| [IDEA-0002 — Theme system and visual personalization](idea-0002.md) | provisional | Appearance and personalization |
 
 Lifecycle: `provisional` → `accepted` → `promoted` or `declined`

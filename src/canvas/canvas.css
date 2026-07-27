@@ -151,7 +151,8 @@
   transform-origin: center center; /* tldraw's container defaults top-left */
 }
 
-.canvas-root .card-grow:hover {
+.canvas-root .card-grow:hover,
+.canvas-root .card-grown {
   transform: scale(var(--grow-scale, 1.015));
 }
 

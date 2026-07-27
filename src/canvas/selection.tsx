@@ -8,6 +8,7 @@
 // white canvas. _getThemeColors is private in the typings, so it's patched
 // on the prototype rather than overridden in the class body.
 
+import { growScaleFor } from "./shapes/ItemShapeUtil";
 import {
   SelectionForegroundOverlayUtil,
   ShapeIndicatorOverlayUtil,
@@ -162,11 +163,18 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
           }
         ).getIndicatorPath(shape);
         const t = editor.getShapePageTransform(shape);
+        const m = new DOMMatrix([t.a, t.b, t.c, t.d, t.e, t.f]);
+        if (doorSelected.has(shape.id)) {
+          // Selected doors hold the hover grow (card-grown class); scale the
+          // ring about the card center by the same factor so it hugs the edge.
+          const { w, h } = shape.props as { w: number; h: number };
+          const g = growScaleFor(w, h);
+          m.translateSelf(w / 2, h / 2)
+            .scaleSelf(g, g)
+            .translateSelf(-w / 2, -h / 2);
+        }
         const path = new Path2D();
-        path.addPath(
-          indicator,
-          new DOMMatrix([t.a, t.b, t.c, t.d, t.e, t.f]),
-        );
+        path.addPath(indicator, m);
         ctx.globalCompositeOperation = "destination-out";
         ctx.fill(path);
         ctx.globalCompositeOperation = "source-over";
