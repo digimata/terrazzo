@@ -112,3 +112,21 @@
 .canvas-root .tl-container {
   --color-selection-stroke: #3ba3ff;
 }
+
+/* Dimensions pill under the selection (Figma's W × H badge). */
+.dims-badge {
+  position: absolute;
+  transform: translateX(-50%);
+  background: #3ba3ff;
+  color: #ffffff;
+  font:
+    600 11px/1 -apple-system,
+    "SF Pro Text",
+    system-ui,
+    sans-serif;
+  padding: 4px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 200;
+}

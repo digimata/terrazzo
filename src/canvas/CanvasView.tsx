@@ -32,9 +32,13 @@ import {
   ItemShapeUtil,
   fixedSize,
 } from "./shapes/ItemShapeUtil";
+import { FigmaSelectionForeground, SelectionDimensions } from "./selection";
 import "./canvas.css";
 
 const shapeUtils = [ItemShapeUtil];
+// Same static type as the default selection foreground → replaces it
+// (mergeArraysAndReplaceDefaults keys on "type").
+const overlayUtils = [FigmaSelectionForeground];
 
 // Strip stock tldraw chrome we don't want; more goes as the design pass
 // replaces each piece (v0: the canvas is ours, the library is invisible).
@@ -42,19 +46,7 @@ const components = {
   StylePanel: null,
   Toolbar: null,
   NavigationPanel: null, // zoom controls + minimap cluster, bottom left
-};
-
-// Keep tldraw's native trackpad/wheel gesture handling, but make movement
-// slightly more responsive and discrete zoom commands substantially finer.
-const tldrawOptions = {
-  camera: {
-    panSpeed: 1.15,
-    zoomSpeed: 1.1,
-    zoomSteps: [
-      0.05, 0.075, 0.1, 0.15, 0.2, 0.25, 0.33, 0.5, 0.67, 0.8, 1, 1.25, 1.5,
-      2, 3, 4, 6, 8,
-    ],
-  },
+  InFrontOfTheCanvas: SelectionDimensions, // Figma's W × H pill
 };
 
 const GAP = 32;
@@ -510,8 +502,8 @@ export default function CanvasView({
     <div className="canvas-root">
       <Tldraw
         shapeUtils={shapeUtils}
+        overlayUtils={overlayUtils}
         components={components}
-        options={tldrawOptions}
         onMount={(editor) => {
           editorRef.current = editor;
           // The app is dark; tldraw's chrome and canvas surface follow.
