@@ -19,6 +19,25 @@ import {
 } from "tldraw";
 import type { FileKind } from "../../app/ipc/types";
 
+/** Our folder glyph: classic two-tone folder, back panel with tab plus a
+ * lighter front panel, drawn for the dark canvas. */
+function FolderGlyph({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={(size * 56) / 72}
+      viewBox="0 0 72 56"
+      fill="none"
+    >
+      <path
+        d="M0 12 a6 6 0 0 1 6 -6 h17.5 a6 6 0 0 1 4.4 1.9 l3.8 4.1 H66 a6 6 0 0 1 6 6 v32 a6 6 0 0 1 -6 6 H6 a6 6 0 0 1 -6 -6 Z"
+        fill="#3d4350"
+      />
+      <rect x="0" y="16" width="72" height="40" rx="6" fill="#525a6c" />
+    </svg>
+  );
+}
+
 export interface ItemShapeProps {
   w: number;
   h: number;
@@ -192,6 +211,36 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
               WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical",
               wordBreak: "break-all",
+            }}
+          >
+            {name}
+          </span>
+        </HTMLContainer>
+      );
+    }
+
+    if (kind === "dir") {
+      // A floating glyph + name, no card box (Spatial's folder look).
+      return (
+        <HTMLContainer
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            pointerEvents: "all",
+          }}
+        >
+          <FolderGlyph size={72} />
+          <span
+            style={{
+              font: "500 12px/1.3 -apple-system, 'SF Pro Text', system-ui, sans-serif",
+              color: "#c6cad2",
+              maxWidth: "90%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {name}
