@@ -8,7 +8,7 @@
 // with a fresh store. Cameras persist per directory for the session only.
 
 import { useEffect, useRef, useState } from "react";
-import { Editor, Tldraw, createShapeId } from "tldraw";
+import { Editor, Tldraw, createShapeId, type TLEventInfo } from "tldraw";
 import "tldraw/tldraw.css";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -41,6 +41,7 @@ import {
   SelectionOnlyIndicator,
   SteelSnapIndicator,
 } from "./selection";
+import { ClickActivation } from "./clickActivation";
 import "./canvas.css";
 
 const shapeUtils = [ItemShapeUtil];
@@ -74,6 +75,84 @@ function shapeIdFor(itemId: string) {
 
 function itemIdFor(shapeId: string) {
   return shapeId.slice("shape:".length);
+}
+
+function openableItemAtPointer(
+  editor: Editor,
+  info: TLEventInfo,
+): ItemShape | null {
+  if (info.type !== "pointer") return null;
+  // The canvas event hook emits target:"canvas" even when SelectTool
+  // internally hit-tests the point as a shape. Repeat that page-space hit
+  // test here instead of trusting the original DOM event target.
+  const hit =
+    info.target === "shape"
+      ? info.shape
+      : editor.getShapeAtPoint(editor.inputs.getCurrentPagePoint(), {
+          hitInside: true,
+          renderingOnly: true,
+        });
+  if (hit?.type !== "item") return null;
+  const item = hit as ItemShape;
+  if (
+    item.props.missing ||
+    item.props.kind === "pdf" ||
+    item.props.kind === "other"
+  ) {
+    return null;
+  }
+  return item;
+}
+
+/** Recognize click activation without defining ShapeUtil.onClick, which
+ * changes tldraw's pointer-down selection behavior. */
+function listenForItemActivation(
+  editor: Editor,
+  activate: (shape: ItemShape) => void,
+) {
+  const activation = new ClickActivation();
+  const handleEvent = (info: TLEventInfo) => {
+    if (info.type !== "pointer") {
+      if (
+        info.type === "misc" &&
+        (info.name === "cancel" ||
+          info.name === "complete" ||
+          info.name === "interrupt")
+      ) {
+        activation.cancel();
+      }
+      return;
+    }
+
+    const item = openableItemAtPointer(editor, info);
+    const itemId = item ? itemIdFor(item.id) : null;
+    if (info.name === "pointer_down") {
+      activation.pointerDown({
+        itemId,
+        pointerId: info.pointerId,
+        button: info.button,
+        modified:
+          info.shiftKey ||
+          info.altKey ||
+          info.ctrlKey ||
+          info.metaKey ||
+          info.accelKey,
+      });
+    } else if (info.name === "pointer_move") {
+      activation.pointerMove(info.pointerId, editor.inputs.getIsDragging());
+    } else if (info.name === "pointer_up") {
+      const activatedId = activation.pointerUp(info.pointerId, itemId);
+      if (!activatedId) return;
+      const activated = editor.getShape(shapeIdFor(activatedId));
+      if (activated?.type === "item") activate(activated);
+    }
+  };
+
+  editor.on("event", handleEvent);
+  return () => {
+    activation.cancel();
+    editor.off("event", handleEvent);
+  };
 }
 
 /** Grid slot for items that have never been placed. Starts below the lowest
@@ -139,6 +218,8 @@ export default function CanvasView({
   onOpenItem: (itemId: string, kind: FileKind) => void;
 }) {
   const editorRef = useRef<Editor | null>(null);
+  const [mountedEditor, setMountedEditor] = useState<Editor | null>(null);
+  const activationUnlisten = useRef<(() => void) | null>(null);
   const knownIds = useRef<Set<string>>(new Set());
   const hydrating = useRef(false);
   const dirty = useRef<Set<string>>(new Set());
@@ -405,9 +486,8 @@ export default function CanvasView({
 
   // User interactions → dirty item ids → debounced sidecar flush.
   useEffect(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    const unlisten = editor.store.listen(
+    if (!mountedEditor) return;
+    const unlisten = mountedEditor.store.listen(
       (entry) => {
         if (hydrating.current) return;
         const touched = [
@@ -421,7 +501,7 @@ export default function CanvasView({
             sawItem = true;
           }
         }
-        if (sawItem) scheduleFlush(editor);
+        if (sawItem) scheduleFlush(mountedEditor);
       },
       { source: "user", scope: "document" },
     );
@@ -437,11 +517,11 @@ export default function CanvasView({
       const ids = [...dirty.current];
       dirty.current.clear();
       if (ids.length > 0) {
-        void enqueueLayout(directoryPath, deltasFor(editor, ids));
+        void enqueueLayout(directoryPath, deltasFor(mountedEditor, ids));
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [directoryPath]);
+  }, [directoryPath, mountedEditor]);
 
   // External fs events touching this directory → debounced reconcile.
   useEffect(() => {
@@ -529,6 +609,8 @@ export default function CanvasView({
   // Save the viewport when leaving this directory.
   useEffect(() => {
     return () => {
+      activationUnlisten.current?.();
+      activationUnlisten.current = null;
       const editor = editorRef.current;
       if (editor) cameraByDir.set(directoryPath, editor.getCamera());
     };
@@ -542,6 +624,10 @@ export default function CanvasView({
         components={components}
         onMount={(editor) => {
           editorRef.current = editor;
+          // A ref update does not rerun effects. Keep the mounted editor in
+          // state so the layout listener is attached even when tldraw calls
+          // onMount after CanvasView's first passive-effect pass.
+          setMountedEditor(editor);
           // The app is dark; tldraw's chrome and canvas surface follow.
           // Snap mode default-on: alignment guides while dragging without
           // holding cmd (cmd now temporarily *disables* snapping).
@@ -550,7 +636,7 @@ export default function CanvasView({
             isSnapMode: true,
           });
           const util = editor.getShapeUtil("item") as ItemShapeUtil;
-          util.onOpen = (shape) => {
+          const activate = (shape: ItemShape) => {
             if (shape.props.missing) return; // nothing to open behind a tombstone
             if (shape.props.kind === "dir") {
               onEnterDirectory(shape.props.path);
@@ -562,6 +648,14 @@ export default function CanvasView({
               onOpenItem(itemIdFor(shape.id), shape.props.kind);
             }
           };
+          util.onOpen = activate;
+
+          // ShapeUtil.onClick changes tldraw's pointer-down selection rules:
+          // with A selected, a drag starting on B would keep translating A.
+          // Recognize completed clicks outside the util so tldraw owns native
+          // selection and drag targeting (iss-0017).
+          activationUnlisten.current?.();
+          activationUnlisten.current = listenForItemActivation(editor, activate);
           hydrate(editor);
         }}
       />
