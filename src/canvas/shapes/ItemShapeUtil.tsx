@@ -34,7 +34,7 @@ function FolderCard({ name, count }: { name: string; count: number }) {
         style={{ position: "absolute", inset: 0 }}
       >
         <path
-          d="M0 80 V18 a14 14 0 0 1 14 -14 h76 a24 24 0 0 1 18 8 l12 17 a18 18 0 0 0 13 7 H300 a40 40 0 0 1 40 40 v4 H0 Z"
+          d="M0 80 V18 a14 14 0 0 1 14 -14 h76 a24 24 0 0 1 18 8 l12 17 a18 18 0 0 0 13 7 H310 a30 30 0 0 1 30 30 v14 H0 Z"
           fill="#141719"
           stroke="#212425"
           strokeWidth="1"
@@ -444,8 +444,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     if (kind === "dir") {
       return new Path2D(
         "M0 248 V18 a14 14 0 0 1 14 -14 h76 a24 24 0 0 1 18 8 " +
-          "l12 17 a18 18 0 0 0 13 7 H300 a40 40 0 0 1 26 9.5 " +
-          "a22 22 0 0 1 14 20.5 V248 " +
+          "l12 17 a18 18 0 0 0 13 7 H310 a30 30 0 0 1 30 30 V248 " +
           "a22 22 0 0 1 -22 22 H22 a22 22 0 0 1 -22 -22 Z",
       );
     }
