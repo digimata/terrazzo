@@ -6,7 +6,7 @@
 >
 > Selection: state=all; labels=[]; assignee=any; author=any; limit=20; sort=updated; order=desc.
 >
-> Data as of: 2026-07-27T05:37:59Z.
+> Data as of: 2026-07-27T06:38:47Z.
 
 | Issue | State | Labels | Updated |
 | --- | --- | --- | --- |
@@ -26,3 +26,4 @@
 | [ISS-0014 — Improve image thumbnail and video poster sharpness](iss-0014.md) | open | — | 2026-07-27 |
 | [ISS-0015 — Add saved workspaces, a default workspace, and a bottom-left root switcher](iss-0015.md) | closed | — | 2026-07-27 |
 | [ISS-0016 — Layout changes revert after opening and closing a note](iss-0016.md) | open | — | 2026-07-27 |
+| [ISS-0017 — Dragging a second canvas card continues moving the previously active card](iss-0017.md) | open | — | 2026-07-27 |

@@ -13,7 +13,6 @@ import "tldraw/tldraw.css";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import {
-  applyLayout,
   ensureThumbnail,
   importFiles,
   moveToTrash,
@@ -21,6 +20,11 @@ import {
   openItem,
   renderMarkdown,
 } from "../app/ipc/commands";
+import {
+  enqueueLayout,
+  layoutSettled,
+  takeRetainedLayout,
+} from "./layoutQueue";
 import { useKeymap } from "../app/hooks/keyboard";
 import { onFsEvent } from "../app/ipc/events";
 import type { CanvasItem, FileKind, LayoutDelta } from "../app/ipc/types";
@@ -166,15 +170,13 @@ export default function CanvasView({
 
   function scheduleFlush(editor: Editor) {
     if (flushTimer.current) clearTimeout(flushTimer.current);
-    flushTimer.current = setTimeout(async () => {
+    flushTimer.current = setTimeout(() => {
       const ids = [...dirty.current];
       dirty.current.clear();
       if (ids.length === 0) return;
-      try {
-        await applyLayout(directoryPath, deltasFor(editor, ids));
-      } catch (e) {
-        setStatus(`layout save failed: ${JSON.stringify(e)}`);
-      }
+      void enqueueLayout(directoryPath, deltasFor(editor, ids), (e) =>
+        setStatus(`layout save failed: ${JSON.stringify(e)}`),
+      );
     }, 400);
   }
 
@@ -236,7 +238,29 @@ export default function CanvasView({
   async function hydrate(editor: Editor) {
     hydrating.current = true;
     try {
+      // Barrier against the previous canvas's teardown flush (iss-0016):
+      // the final write must land before layout.json is read, or a move made
+      // just before opening a note reverts on return.
+      await layoutSettled(directoryPath);
       const { items } = await openDirectory(directoryPath);
+      // Deltas whose write failed are newer than anything on disk: overlay
+      // them so the arrangement survives visually, then retry the save.
+      const recovered = takeRetainedLayout(directoryPath).filter((d) =>
+        items.some((i) => i.id === d.id),
+      );
+      if (recovered.length > 0) {
+        const byId = new Map(recovered.map((d) => [d.id, d]));
+        for (const item of items) {
+          const d = byId.get(item.id);
+          if (d) {
+            item.frame = d.frame;
+            item.rotation = d.rotation;
+          }
+        }
+        void enqueueLayout(directoryPath, recovered, (e) =>
+          setStatus(`layout save failed: ${JSON.stringify(e)}`),
+        );
+      }
       const place = makePlacer(items);
       const unplaced = items.filter((i) => !i.frame);
       knownIds.current = new Set(items.map((i) => i.id));
@@ -251,12 +275,13 @@ export default function CanvasView({
       }
       // First placement of never-placed items is itself layout worth keeping.
       if (unplaced.length > 0) {
-        await applyLayout(
+        await enqueueLayout(
           directoryPath,
           deltasFor(
             editor,
             unplaced.map((i) => i.id),
           ),
+          (e) => setStatus(`layout save failed: ${JSON.stringify(e)}`),
         );
       }
       void fillPreviews(editor, items);
@@ -280,7 +305,7 @@ export default function CanvasView({
         if (!shape) {
           editor.createShapes<ItemShape>([shapeFor(item, place)]);
           if (!item.frame) {
-            await applyLayout(directoryPath, deltasFor(editor, [item.id]));
+            await enqueueLayout(directoryPath, deltasFor(editor, [item.id]));
           }
         } else if (
           shape.props.path !== item.entry.path ||
@@ -405,12 +430,14 @@ export default function CanvasView({
       // Flush pending deltas before the editor is torn down (v0 §3.1:
       // debounced writes flush on navigation) — opening a note, a media
       // view, or a folder inside the debounce window must not drop a move.
-      // Deltas are read synchronously here, while the editor is still live.
+      // Deltas are read synchronously here, while the editor is still live;
+      // the queue serializes the write ahead of the next mount's hydration
+      // read and retains the deltas if it fails (iss-0016).
       if (flushTimer.current) clearTimeout(flushTimer.current);
       const ids = [...dirty.current];
       dirty.current.clear();
       if (ids.length > 0) {
-        void applyLayout(directoryPath, deltasFor(editor, ids)).catch(() => {});
+        void enqueueLayout(directoryPath, deltasFor(editor, ids));
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -472,12 +499,13 @@ export default function CanvasView({
           hydrating.current = false;
         }
         if (dropped.length > 0) {
-          await applyLayout(
+          await enqueueLayout(
             directoryPath,
             deltasFor(
               editor,
               dropped.map((i) => i.id),
             ),
+            (e) => setStatus(`layout save failed: ${JSON.stringify(e)}`),
           );
           void fillPreviews(editor, dropped);
         }
