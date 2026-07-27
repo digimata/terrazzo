@@ -8,18 +8,32 @@
 // with a fresh store. Cameras persist per directory for the session only.
 
 import { useEffect, useRef, useState } from "react";
-import { Editor, Tldraw, createShapeId, type TLEventInfo } from "tldraw";
+import {
+  Editor,
+  Tldraw,
+  createShapeId,
+  type TLEventInfo,
+  type TldrawOptions,
+  type VecLike,
+} from "tldraw";
 import "tldraw/tldraw.css";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import {
   ensureThumbnail,
+  importClipboardImages,
   importFiles,
   moveToTrash,
   openDirectory,
   openItem,
   renderMarkdown,
 } from "../app/ipc/commands";
+import {
+  cardSizeFor,
+  imageDimensions,
+  partitionPastedFiles,
+  toClipboardImage,
+} from "./clipboardPaste";
 import {
   enqueueLayout,
   layoutSettled,
@@ -423,6 +437,122 @@ export default function CanvasView({
     void fillPreviews(editor, items);
   }
 
+  /** Durable clipboard import (RCA: pasted-images-not-persisting): pasted
+   * image bytes go through Rust and come back as reconciled items with
+   * durable UUIDs — never as stock tldraw assets that exist only in the
+   * store. Insertion is an upsert: the fs watcher can reconcile the new file
+   * before the command response applies, so an existing shape is moved to
+   * the paste point instead of duplicated. */
+  async function importPastedFiles(
+    editor: Editor,
+    files: File[],
+    point: VecLike,
+  ) {
+    const { supported, rejected } = partitionPastedFiles(files);
+    if (supported.length === 0) {
+      if (rejected > 0) setStatus(`paste: ${rejected} unsupported file(s)`);
+      return;
+    }
+    try {
+      const images = await Promise.all(supported.map(toClipboardImage));
+      // Card frames follow the image's intrinsic aspect ratio (the
+      // thumbnail is object-fit: cover — a stock 3:2 frame crops a square
+      // paste). Reconcile order isn't write order, so dimensions are keyed
+      // by byte size, which survives the round trip as entry.size.
+      const dimsBySize = new Map<number, { width: number; height: number }>();
+      await Promise.all(
+        supported.map(async (f) => {
+          const dims = await imageDimensions(f);
+          if (dims) dimsBySize.set(f.size, dims);
+        }),
+      );
+      const { items, rejected: invalid } = await importClipboardImages(
+        directoryPath,
+        images,
+      );
+      const totalRejected = rejected + invalid;
+      hydrating.current = true;
+      try {
+        items.forEach((item, i) => {
+          const offset = i * 24; // same bounded cascade as multi-file drop
+          const id = shapeIdFor(item.id);
+          const at = { x: point.x + offset, y: point.y + offset };
+          const dims = dimsBySize.get(item.entry.size);
+          const card = dims ? cardSizeFor(dims.width, dims.height) : null;
+          if (editor.getShape(id)) {
+            editor.updateShapes<ItemShape>([
+              {
+                id,
+                type: "item",
+                ...at,
+                ...(card ? { props: { w: card.width, h: card.height } } : {}),
+              },
+            ]);
+          } else {
+            const base = shapeFor(item, () => ({ x: 0, y: 0 }));
+            editor.createShapes<ItemShape>([
+              {
+                ...base,
+                ...at,
+                props: card
+                  ? { ...base.props, w: card.width, h: card.height }
+                  : base.props,
+              },
+            ]);
+          }
+          knownIds.current.add(item.id);
+        });
+        if (items.length > 0) {
+          editor.select(...items.map((i) => shapeIdFor(i.id)));
+        }
+      } finally {
+        hydrating.current = false;
+      }
+      if (items.length > 0) {
+        await enqueueLayout(
+          directoryPath,
+          deltasFor(
+            editor,
+            items.map((i) => i.id),
+          ),
+          (e) => setStatus(`layout save failed: ${JSON.stringify(e)}`),
+        );
+        void fillPreviews(editor, items);
+      }
+      setStatus(
+        totalRejected > 0
+          ? `pasted ${items.length} image(s), ${totalRejected} unsupported`
+          : `pasted ${items.length} image(s)`,
+      );
+    } catch (e) {
+      setStatus(`paste import failed: ${JSON.stringify(e)}`);
+    }
+  }
+
+  // tldraw options must be referentially stable across renders; the handler
+  // reaches the current closure through a ref. Returning false for every
+  // clipboard payload keeps stock tldraw paste from ever mutating the
+  // projected store — supported images re-enter through the Rust import,
+  // everything else (text, copied shapes, unsupported files) is inert.
+  const pasteRef = useRef<(editor: Editor, files: File[], point: VecLike) => void>(
+    () => {},
+  );
+  pasteRef.current = (editor, files, point) => {
+    void importPastedFiles(editor, files, point);
+  };
+  const [tldrawOptions] = useState<Partial<TldrawOptions>>(() => ({
+    onBeforePasteFromClipboard: ({ editor, content, point }) => {
+      if (content.type === "files") {
+        pasteRef.current(
+          editor,
+          content.files,
+          point ?? editor.getViewportPageBounds().center,
+        );
+      }
+      return false;
+    },
+  }));
+
   function selectedItems(editor: Editor): ItemShape[] {
     return editor
       .getSelectedShapes()
@@ -478,10 +608,16 @@ export default function CanvasView({
       if (editor) openSelection(editor);
     },
     // Cards are files: tldraw's plain-delete would remove the shape without
-    // touching disk and desync the canvas. Claimed and inert — deletion is
-    // Move to Trash (cmd+backspace), matching Finder.
-    backspace: () => {},
-    delete: () => {},
+    // touching disk and desync the canvas. Claimed — plain delete IS Move
+    // to Trash (cmd+backspace kept as the Finder-habit alias).
+    backspace: () => {
+      const editor = editorRef.current;
+      if (editor) void trashSelection(editor);
+    },
+    delete: () => {
+      const editor = editorRef.current;
+      if (editor) void trashSelection(editor);
+    },
   });
 
   // User interactions → dirty item ids → debounced sidecar flush.
@@ -622,6 +758,7 @@ export default function CanvasView({
         shapeUtils={shapeUtils}
         overlayUtils={overlayUtils}
         components={components}
+        options={tldrawOptions}
         onMount={(editor) => {
           editorRef.current = editor;
           // A ref update does not rerun effects. Keep the mounted editor in
