@@ -6,12 +6,23 @@
   z-index: 100;
 }
 
+/* The stage ends at the rail, but its left padding is rail + gap while the
+ * right is just the gap — the content box sits symmetric about the window
+ * center, so the asset centers in the window, not in (window − rail). The
+ * stage's own right edge keeps its scrollbar visible beside the rail.
+ * RAIL_W / STAGE_PAD in MediaView.tsx mirror these values. */
 .media-stage {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 240px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px;
+  /* Bottom-heavy padding: optical centering, a touch above true center
+   * (Spatial sits the asset slightly high). */
+  padding: 40px 48px 80px calc(240px + 48px);
   min-width: 0;
 }
 
@@ -22,13 +33,51 @@
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
 }
 
+/* Tall captures (full-page screenshots): stage-wide, top-aligned, and the
+ * stage scrolls vertically — contain-fit would crush them illegible. */
+.media-stage-tall {
+  display: block;
+  overflow-y: auto;
+}
+
+.media-stage-tall .media-asset {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  margin: 0 auto;
+}
+
+/* Dominant-color swatches in the left gutter (Spatial), top-aligned with
+ * the asset via inline `top`. */
+.media-palette {
+  position: absolute;
+  left: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 2;
+}
+
+.media-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
 .media-rail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
   width: 240px;
+  box-sizing: border-box;
   padding: 48px 28px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  border-left: 1px solid #1e1e26;
+  background: #101011;
 }
 
 .media-row {

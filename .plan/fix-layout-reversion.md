@@ -1,7 +1,7 @@
 ---
 title: "Fix layout reversion across canvas remounts"
 date: 2026-07-26
-status: draft
+status: approved
 affects: "ISS-0016 and TRZ-0007"
 ---
 
