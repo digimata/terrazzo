@@ -45,6 +45,32 @@ export class FigmaSelectionForeground extends SelectionForegroundOverlayUtil {
   }
 }
 
+// Figma keeps the box and corner handles visible while you resize; tldraw
+// hides both (its display gates exclude select.resizing). _computeSelectionState
+// is private in the typings, so the tweak rides the prototype.
+(
+  FigmaSelectionForeground.prototype as unknown as {
+    _computeSelectionState: () => {
+      shouldDisplayBox: boolean;
+      showHandles: boolean;
+    } | null;
+  }
+)._computeSelectionState = function (this: FigmaSelectionForeground) {
+  const state = (
+    SelectionForegroundOverlayUtil.prototype as unknown as {
+      _computeSelectionState: (this: unknown) => {
+        shouldDisplayBox: boolean;
+        showHandles: boolean;
+      } | null;
+    }
+  )._computeSelectionState.call(this);
+  if (state && this.editor.isIn("select.resizing")) {
+    state.shouldDisplayBox = true;
+    state.showHandles = true;
+  }
+  return state;
+};
+
 /** The blue ring on hover is also canvas-overlay work (ShapeIndicatorOverlayUtil
  * strokes selected + hovered shapes alike). Cards grow on hover instead, so
  * this subclass drops the hovered id and keeps the ring for selection only.
