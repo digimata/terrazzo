@@ -155,3 +155,9 @@
   background: #232729;
   color: #e6e9ef;
 }
+
+/* Our arrow replaces tldraw's default cursor on the canvas; grab/resize/
+ * text cursors stay native. */
+.canvas-root .tl-container {
+  --tl-cursor-default: var(--cursor-arrow);
+}
