@@ -108,7 +108,7 @@ const theme = EditorView.theme(
 // only differentiation is weight, size, italics, and decoration lines.
 const highlight = HighlightStyle.define([
   { tag: tags.heading, fontWeight: "600" },
-  { tag: tags.heading1, fontSize: "1.8em", fontWeight: "600" },
+  { tag: tags.heading1, fontSize: "1.8em", fontWeight: "500" },
   { tag: tags.heading2, fontSize: "1.25em", fontWeight: "600" },
   { tag: tags.heading3, fontSize: "1.1em", fontWeight: "600" },
   { tag: tags.strikethrough, textDecoration: "line-through" },
