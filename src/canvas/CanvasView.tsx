@@ -64,12 +64,6 @@ const COLS = 8;
 /** Session-only per-directory viewport (v0 plan §5.3 item 6). */
 const cameraByDir = new Map<string, { x: number; y: number; z: number }>();
 
-/** Status-bar summary; PR-010 requires reporting how many unsupported files
- * are present but hidden in the current directory. */
-function itemsStatus(count: number, hidden: number) {
-  return hidden > 0 ? `${count} items · ${hidden} hidden` : `${count} items`;
-}
-
 function shapeIdFor(itemId: string) {
   return createShapeId(itemId);
 }
@@ -242,7 +236,7 @@ export default function CanvasView({
   async function hydrate(editor: Editor) {
     hydrating.current = true;
     try {
-      const { items, hiddenCount } = await openDirectory(directoryPath);
+      const { items } = await openDirectory(directoryPath);
       const place = makePlacer(items);
       const unplaced = items.filter((i) => !i.frame);
       knownIds.current = new Set(items.map((i) => i.id));
@@ -255,7 +249,6 @@ export default function CanvasView({
       } else {
         editor.zoomToFit();
       }
-      setStatus(itemsStatus(items.length, hiddenCount));
       // First placement of never-placed items is itself layout worth keeping.
       if (unplaced.length > 0) {
         await applyLayout(
@@ -275,7 +268,7 @@ export default function CanvasView({
   /** Reconcile after an external change: update, add, and remove shapes to
    * match the freshly reconciled item list, preserving arrangement. */
   async function reconcile(editor: Editor) {
-    const { items, hiddenCount } = await openDirectory(directoryPath);
+    const { items } = await openDirectory(directoryPath);
     const place = makePlacer(items);
     const nextIds = new Set(items.map((i) => i.id));
 
@@ -321,7 +314,6 @@ export default function CanvasView({
       knownIds.current = nextIds;
       hydrating.current = false;
     }
-    setStatus(itemsStatus(items.length, hiddenCount));
     void fillPreviews(editor, items);
   }
 
@@ -545,7 +537,7 @@ export default function CanvasView({
           hydrate(editor);
         }}
       />
-      <div className="canvas-status">{status}</div>
+      {status && <div className="canvas-status">{status}</div>}
     </div>
   );
 }
