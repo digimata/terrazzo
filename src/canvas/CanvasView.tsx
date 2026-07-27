@@ -16,8 +16,11 @@ import {
   applyLayout,
   ensureThumbnail,
   importFiles,
+  moveToTrash,
   openDirectory,
+  openItem,
 } from "../app/ipc/commands";
+import { useKeymap } from "../app/hooks/keyboard";
 import { onFsEvent } from "../app/ipc/events";
 import type { CanvasItem, LayoutDelta } from "../app/ipc/types";
 import {
@@ -248,6 +251,66 @@ export default function CanvasView({
     setStatus(`${items.length} items`);
     void fillThumbnails(editor, items);
   }
+
+  function selectedItems(editor: Editor): ItemShape[] {
+    return editor
+      .getSelectedShapes()
+      .filter((s): s is ItemShape => s.type === "item");
+  }
+
+  /** Move the selection to the system Trash (v0 §4.5). Rust confirms each
+   * UUID, trashes, and drops the layout entry; the shape removal here is
+   * programmatic and excluded from canvas undo — undo must never resurrect
+   * a card whose file is in the Trash. */
+  async function trashSelection(editor: Editor) {
+    const shapes = selectedItems(editor);
+    if (shapes.length === 0) return;
+    const ids = shapes.map((s) => itemIdFor(s.id));
+    try {
+      await moveToTrash(directoryPath, ids);
+    } catch (e) {
+      setStatus(`move to trash failed: ${JSON.stringify(e)}`);
+      return;
+    }
+    hydrating.current = true;
+    try {
+      editor.run(() => editor.deleteShapes(shapes.map((s) => s.id)), {
+        history: "ignore",
+      });
+    } finally {
+      hydrating.current = false;
+    }
+    for (const id of ids) knownIds.current.delete(id);
+    setStatus(
+      ids.length === 1
+        ? `moved “${shapes[0].props.name}” to Trash`
+        : `moved ${ids.length} items to Trash`,
+    );
+  }
+
+  function openSelection(editor: Editor) {
+    for (const shape of selectedItems(editor)) {
+      openItem(shape.props.path).catch((e) =>
+        setStatus(`open failed: ${JSON.stringify(e)}`),
+      );
+    }
+  }
+
+  useKeymap({
+    "cmd+backspace": () => {
+      const editor = editorRef.current;
+      if (editor) void trashSelection(editor);
+    },
+    "cmd+o": () => {
+      const editor = editorRef.current;
+      if (editor) openSelection(editor);
+    },
+    // Cards are files: tldraw's plain-delete would remove the shape without
+    // touching disk and desync the canvas. Claimed and inert — deletion is
+    // Move to Trash (cmd+backspace), matching Finder.
+    backspace: () => {},
+    delete: () => {},
+  });
 
   // User interactions → dirty item ids → debounced sidecar flush.
   useEffect(() => {

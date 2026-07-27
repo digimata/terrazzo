@@ -32,16 +32,32 @@ function normalizeBinding(binding: string): string {
   return [...order, key].join("+");
 }
 
+function isEditable(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA")
+  );
+}
+
 function dispatch(e: KeyboardEvent) {
   // Escape is the app's everywhere: never let macOS treat it as
   // exit-fullscreen, whether or not a layer handles it.
   if (e.key === "Escape") e.preventDefault();
 
+  // Typing wins: keys aimed at an editable element never reach the layers,
+  // so a canvas backspace claim can't eat text editing.
+  if (isEditable(e.target)) return;
+
   const combo = normalize(e);
   for (let i = stack.length - 1; i >= 0; i--) {
     const handler = stack[i][combo];
     if (handler) {
+      // A claimed combo is consumed outright — stopPropagation keeps it from
+      // reaching other listeners (tldraw's own keyboard handling included).
       e.preventDefault();
+      e.stopPropagation();
       handler(e);
       return;
     }

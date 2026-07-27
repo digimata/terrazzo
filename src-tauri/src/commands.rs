@@ -94,6 +94,35 @@ pub async fn ensure_thumbnail(
     Ok(out.to_string_lossy().to_string())
 }
 
+/// Move items to the system Trash (v0 §4.5). Async: Trash goes through
+/// NSFileManager on macOS — keep disk work off the main thread.
+#[tauri::command]
+pub async fn move_to_trash(
+    state: State<'_, AppState>,
+    path: String,
+    ids: Vec<String>,
+) -> AppResult<()> {
+    let root = state.root()?;
+    let dir = paths::ensure_inside(&root, Path::new(&path))?;
+    layout::trash_items(&dir, &ids)
+}
+
+/// Open a file or directory with its system default application. macOS-only
+/// for v0 (`/usr/bin/open`).
+#[tauri::command]
+pub async fn open_item(state: State<'_, AppState>, path: String) -> AppResult<()> {
+    let root = state.root()?;
+    let target = paths::ensure_inside(&root, Path::new(&path))?;
+    let status = std::process::Command::new("open").arg(&target).status()?;
+    if !status.success() {
+        return Err(crate::error::AppError::new(
+            crate::error::ErrorCode::Io,
+            format!("open failed for {}", target.display()),
+        ));
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub fn import_files(
     state: State<AppState>,

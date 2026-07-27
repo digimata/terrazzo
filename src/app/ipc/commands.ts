@@ -48,6 +48,17 @@ export function ensureThumbnail(path: string): Promise<string> {
   return invoke("ensure_thumbnail", { path });
 }
 
+/** Move items to the system Trash (v0 §4.5): each UUID is confirmed to
+ * resolve, trashed, and its layout entry dropped only after Trash succeeds. */
+export function moveToTrash(path: string, ids: string[]): Promise<void> {
+  return invoke("move_to_trash", { path, ids });
+}
+
+/** Open a file or directory with its system default application. */
+export function openItem(path: string): Promise<void> {
+  return invoke("open_item", { path });
+}
+
 /** Copy external files into the workspace (Finder drop). Never moves or
  * overwrites. `destDir` defaults to the workspace root. */
 export function importFiles(

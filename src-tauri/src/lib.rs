@@ -17,7 +17,9 @@ pub fn run() {
             commands::apply_layout,
             commands::rescan,
             commands::ensure_thumbnail,
-            commands::import_files
+            commands::import_files,
+            commands::move_to_trash,
+            commands::open_item
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

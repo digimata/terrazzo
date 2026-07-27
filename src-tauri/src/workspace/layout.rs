@@ -233,6 +233,44 @@ pub fn open_directory(dir: &Path) -> AppResult<Vec<CanvasItem>> {
     Ok(out)
 }
 
+/// Move items to the system Trash (v0 §4.5): confirm each UUID still
+/// resolves, trash the file or directory, and drop its layout entry only
+/// after Trash succeeds. On partial failure the successful removals are
+/// still persisted before the first error propagates. The watcher's remove
+/// event drives the frontend reconcile.
+pub fn trash_items(dir: &Path, ids: &[String]) -> AppResult<()> {
+    let mut layout = read(dir)?;
+    let mut first_err: Option<AppError> = None;
+    let mut changed = false;
+    for id in ids {
+        let Some(item) = layout.items.get(id) else {
+            first_err.get_or_insert_with(|| {
+                AppError::new(ErrorCode::Io, format!("trash for unknown item {id}"))
+            });
+            continue;
+        };
+        let target = dir.join(&item.path);
+        if let Err(e) = trash::delete(&target) {
+            first_err.get_or_insert_with(|| {
+                AppError::new(
+                    ErrorCode::Io,
+                    format!("trash failed for {}: {e}", target.display()),
+                )
+            });
+            continue;
+        }
+        layout.items.remove(id);
+        changed = true;
+    }
+    if changed {
+        write(dir, &layout)?;
+    }
+    match first_err {
+        Some(e) => Err(e),
+        None => Ok(()),
+    }
+}
+
 /// Apply frontend deltas and persist atomically. Unknown IDs are rejected —
 /// the frontend's projection is stale and should re-open the directory.
 pub fn apply_deltas(dir: &Path, deltas: &[LayoutDelta]) -> AppResult<()> {
