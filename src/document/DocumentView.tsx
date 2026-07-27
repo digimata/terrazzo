@@ -57,7 +57,7 @@ const theme = EditorView.theme(
       backgroundColor: "#101011", // match tldraw dark canvas
       color: "#e6e9ef",
       height: "100%",
-      fontSize: "15px",
+      fontSize: "14px",
     },
     ".cm-content": {
       fontFamily: "-apple-system, 'SF Pro Text', system-ui, sans-serif",
