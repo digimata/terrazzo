@@ -109,8 +109,8 @@ const theme = EditorView.theme(
 const highlight = HighlightStyle.define([
   { tag: tags.heading, fontWeight: "600" },
   { tag: tags.heading1, fontSize: "2em", fontWeight: "500" },
-  { tag: tags.heading2, fontSize: "1.25em", fontWeight: "600" },
-  { tag: tags.heading3, fontSize: "1.1em", fontWeight: "600" },
+  { tag: tags.heading2, fontSize: "1.25em", fontWeight: "500" },
+  { tag: tags.heading3, fontSize: "1.1em", fontWeight: "500" },
   { tag: tags.strikethrough, textDecoration: "line-through" },
   { tag: tags.strong, fontWeight: "600" },
   { tag: tags.emphasis, fontStyle: "italic" },
