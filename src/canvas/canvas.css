@@ -108,7 +108,7 @@
   max-width: 100%;
 }
 
-/* Selection feedback: quiet white hairline instead of tldraw's blue. */
+/* Selection + resize stroke: our blue, not tldraw's. */
 .canvas-root .tl-container {
-  --color-selection-stroke: rgba(230, 233, 239, 0.4);
+  --color-selection-stroke: #3ba3ff;
 }
