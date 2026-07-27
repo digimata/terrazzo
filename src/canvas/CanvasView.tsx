@@ -35,13 +35,18 @@ import {
   FigmaSelectionForeground,
   SelectionDimensions,
   SelectionOnlyIndicator,
+  SteelSnapIndicator,
 } from "./selection";
 import "./canvas.css";
 
 const shapeUtils = [ItemShapeUtil];
 // Same static type as the default selection foreground → replaces it
 // (mergeArraysAndReplaceDefaults keys on "type").
-const overlayUtils = [FigmaSelectionForeground, SelectionOnlyIndicator];
+const overlayUtils = [
+  FigmaSelectionForeground,
+  SelectionOnlyIndicator,
+  SteelSnapIndicator,
+];
 
 // Strip stock tldraw chrome we don't want; more goes as the design pass
 // replaces each piece (v0: the canvas is ours, the library is invisible).
@@ -518,7 +523,12 @@ export default function CanvasView({
         onMount={(editor) => {
           editorRef.current = editor;
           // The app is dark; tldraw's chrome and canvas surface follow.
-          editor.user.updateUserPreferences({ colorScheme: "dark" });
+          // Snap mode default-on: alignment guides while dragging without
+          // holding cmd (cmd now temporarily *disables* snapping).
+          editor.user.updateUserPreferences({
+            colorScheme: "dark",
+            isSnapMode: true,
+          });
           const util = editor.getShapeUtil("item") as ItemShapeUtil;
           util.onOpen = (shape) => {
             if (shape.props.missing) return; // nothing to open behind a tombstone

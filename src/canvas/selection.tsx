@@ -11,6 +11,7 @@
 import {
   SelectionForegroundOverlayUtil,
   ShapeIndicatorOverlayUtil,
+  SnapIndicatorOverlayUtil,
   useEditor,
   useValue,
 } from "tldraw";
@@ -51,6 +52,49 @@ export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
   strokeColor: "#3ba3ff",
   bgColor: "#ffffff",
 });
+
+/** Snap guides in the document caret's steel blue instead of the theme's
+ * snap color. The default render only injects the color before delegating
+ * to _renderPoints/_renderGaps, so the override re-reads nothing else. */
+const SNAP_STEEL = "#b5d6fb";
+
+export class SteelSnapIndicator extends SnapIndicatorOverlayUtil {}
+
+(
+  SteelSnapIndicator.prototype as unknown as {
+    render: (ctx: CanvasRenderingContext2D, overlays: unknown[]) => void;
+  }
+).render = function (
+  this: SteelSnapIndicator,
+  ctx: CanvasRenderingContext2D,
+  overlays: unknown[],
+) {
+  // _renderPoints/_renderGaps are private in the typings; the runtime
+  // methods take the color as a plain argument.
+  const self = this as unknown as {
+    editor: { getZoomLevel(): number };
+    _renderPoints(
+      ctx: CanvasRenderingContext2D,
+      line: unknown,
+      zoom: number,
+      color: string,
+    ): void;
+    _renderGaps(
+      ctx: CanvasRenderingContext2D,
+      line: unknown,
+      zoom: number,
+      color: string,
+    ): void;
+  };
+  const zoom = self.editor.getZoomLevel();
+  for (const overlay of overlays as {
+    props: { line: { type: "points" | "gaps" } };
+  }[]) {
+    const { line } = overlay.props;
+    if (line.type === "points") self._renderPoints(ctx, line, zoom, SNAP_STEEL);
+    else if (line.type === "gaps") self._renderGaps(ctx, line, zoom, SNAP_STEEL);
+  }
+};
 
 /** Rendered via components.InFrontOfTheCanvas — screen-space overlay inside
  * the tldraw container. Dimensions are page units (the file's real size),
