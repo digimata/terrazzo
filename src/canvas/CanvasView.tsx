@@ -19,6 +19,7 @@ import {
   moveToTrash,
   openDirectory,
   openItem,
+  renderMarkdown,
 } from "../app/ipc/commands";
 import { useKeymap } from "../app/hooks/keyboard";
 import { onFsEvent } from "../app/ipc/events";
@@ -26,6 +27,8 @@ import type { CanvasItem, FileKind, LayoutDelta } from "../app/ipc/types";
 import {
   ITEM_H,
   ITEM_W,
+  NOTE_CARD_H,
+  NOTE_CARD_W,
   ItemShape,
   ItemShapeUtil,
 } from "./shapes/ItemShapeUtil";
@@ -69,15 +72,28 @@ function makePlacer(items: CanvasItem[]) {
     framed.length === 0
       ? 0
       : Math.max(...framed.map((i) => i.frame!.y + i.frame!.height)) + GAP;
+  // Rows must clear the tallest default card, or first placement of a
+  // directory with notes stacks portrait cards into the row below.
+  const rowH = items.some(
+    (i) => !i.frame && i.entry.kind === "markdown",
+  )
+    ? NOTE_CARD_H
+    : ITEM_H;
   let slot = 0;
   return () => ({
     x: (slot % COLS) * (ITEM_W + GAP),
-    y: baseY + Math.floor(slot++ / COLS) * (ITEM_H + GAP),
+    y: baseY + Math.floor(slot++ / COLS) * (rowH + GAP),
   });
 }
 
+function defaultSize(item: CanvasItem) {
+  return item.entry.kind === "markdown"
+    ? { width: NOTE_CARD_W, height: NOTE_CARD_H }
+    : { width: ITEM_W, height: ITEM_H };
+}
+
 function shapeFor(item: CanvasItem, place: () => { x: number; y: number }) {
-  const frame = item.frame ?? { ...place(), width: ITEM_W, height: ITEM_H };
+  const frame = item.frame ?? { ...place(), ...defaultSize(item) };
   return {
     id: shapeIdFor(item.id),
     type: "item" as const,
@@ -148,17 +164,43 @@ export default function CanvasView({
     }, 400);
   }
 
-  /** Deliver thumbnails as they generate (PR-014: placeholder until then).
-   * Concurrency-limited; each delivery patches one shape's thumbnail prop.
-   * Programmatic patches run under the hydrating flag so they never count
-   * as layout changes. */
-  async function fillThumbnails(editor: Editor, items: CanvasItem[]) {
+  /** Deliver previews as they generate (PR-014: placeholder until then):
+   * image/video thumbnails and Markdown note HTML (PR-009), each patching
+   * one shape prop. Concurrency-limited; programmatic patches run under the
+   * hydrating flag so they never count as layout changes. */
+  async function fillPreviews(editor: Editor, items: CanvasItem[]) {
     const queue = items.filter(
       (i) =>
-        !i.missing && (i.entry.kind === "image" || i.entry.kind === "video"),
+        !i.missing &&
+        (i.entry.kind === "image" ||
+          i.entry.kind === "video" ||
+          i.entry.kind === "markdown"),
     );
+    const patch = (itemId: string, props: Partial<ItemShape["props"]>) => {
+      hydrating.current = true;
+      try {
+        editor.updateShapes<ItemShape>([
+          { id: shapeIdFor(itemId), type: "item", props },
+        ]);
+      } finally {
+        hydrating.current = false;
+      }
+    };
     const worker = async () => {
       for (let item = queue.shift(); item; item = queue.shift()) {
+        const shape = () =>
+          editor.getShape(shapeIdFor(item!.id)) as ItemShape | undefined;
+        if (item.entry.kind === "markdown") {
+          try {
+            const note = await renderMarkdown(item.entry.path);
+            if (shape() && shape()!.props.note !== note) {
+              patch(item.id, { note });
+            }
+          } catch {
+            // unreadable note keeps its placeholder card
+          }
+          continue;
+        }
         let url: string;
         if (item.entry.path.toLowerCase().endsWith(".svg")) {
           url = convertFileSrc(item.entry.path); // ffmpeg can't; svg is small
@@ -169,17 +211,8 @@ export default function CanvasView({
             continue; // unreadable/corrupt media keeps its placeholder card
           }
         }
-        const shape = editor.getShape(shapeIdFor(item.id)) as
-          | ItemShape
-          | undefined;
-        if (!shape || shape.props.thumbnail === url) continue;
-        hydrating.current = true;
-        try {
-          editor.updateShapes<ItemShape>([
-            { id: shape.id, type: "item", props: { thumbnail: url } },
-          ]);
-        } finally {
-          hydrating.current = false;
+        if (shape() && shape()!.props.thumbnail !== url) {
+          patch(item.id, { thumbnail: url });
         }
       }
     };
@@ -213,7 +246,7 @@ export default function CanvasView({
           ),
         );
       }
-      void fillThumbnails(editor, items);
+      void fillPreviews(editor, items);
     } finally {
       hydrating.current = false;
     }
@@ -250,8 +283,8 @@ export default function CanvasView({
                 path: item.entry.path,
                 missing: item.missing,
                 // A stale preview must not survive on a tombstone; when the
-                // file returns, fillThumbnails below re-delivers.
-                ...(item.missing ? { thumbnail: "" } : {}),
+                // file returns, fillPreviews below re-delivers.
+                ...(item.missing ? { thumbnail: "", note: "" } : {}),
               },
             },
           ]);
@@ -267,7 +300,7 @@ export default function CanvasView({
       hydrating.current = false;
     }
     setStatus(itemsStatus(items.length, hiddenCount));
-    void fillThumbnails(editor, items);
+    void fillPreviews(editor, items);
   }
 
   function selectedItems(editor: Editor): ItemShape[] {
@@ -432,7 +465,7 @@ export default function CanvasView({
               dropped.map((i) => i.id),
             ),
           );
-          void fillThumbnails(editor, dropped);
+          void fillPreviews(editor, dropped);
         }
         // Unsupported imports copy in fine but get no card (PR-010) — say
         // so, or the drop looks like it silently ate the file.
@@ -466,6 +499,8 @@ export default function CanvasView({
         components={components}
         onMount={(editor) => {
           editorRef.current = editor;
+          // The app is dark; tldraw's chrome and canvas surface follow.
+          editor.user.updateUserPreferences({ colorScheme: "dark" });
           const util = editor.getShapeUtil("item") as ItemShapeUtil;
           util.onOpen = (shape) => {
             if (shape.props.missing) return; // nothing to open behind a tombstone

@@ -8,7 +8,7 @@ use tauri::{AppHandle, Manager, State};
 use serde::Serialize;
 
 use crate::error::AppResult;
-use crate::media::poster;
+use crate::media::{markdown, poster};
 use crate::state::{AppState, Workspace};
 use crate::workspace::{drafts, import, layout, paths, scan, sidecar, watch};
 
@@ -93,6 +93,16 @@ pub async fn ensure_thumbnail(
     let source = paths::ensure_inside(&root, Path::new(&path))?;
     let out = poster::ensure(&root, &source)?;
     Ok(out.to_string_lossy().to_string())
+}
+
+/// Render a Markdown file to static preview HTML for its canvas note card
+/// (PR-009). Raw HTML in the source is demoted to text, never interpreted.
+#[tauri::command]
+pub async fn render_markdown(state: State<'_, AppState>, path: String) -> AppResult<String> {
+    let root = state.root()?;
+    let target = paths::ensure_inside(&root, Path::new(&path))?;
+    let text = std::fs::read_to_string(&target)?;
+    Ok(markdown::render_preview(&text))
 }
 
 /// Mirrored by `TextDoc` in `src/app/ipc/types.ts`. The mtime rides along

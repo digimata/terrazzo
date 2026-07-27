@@ -29,6 +29,12 @@ export function openDirectory(path: string): Promise<DirectoryView> {
   return invoke("open_directory", { path });
 }
 
+/** Render a Markdown file to static preview HTML for its canvas note card
+ * (PR-009). Raw HTML in the source is stripped Rust-side. */
+export function renderMarkdown(path: string): Promise<string> {
+  return invoke("render_markdown", { path });
+}
+
 /** Persist layout deltas for one directory (called after an interaction
  * ends, never during). */
 export function applyLayout(

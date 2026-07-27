@@ -30,6 +30,9 @@ export interface ItemShapeProps {
   /** Asset-protocol URL of the rendered preview (image thumbnail or video
    * poster frame). Empty until the thumbnail queue delivers (PR-014). */
   thumbnail: string;
+  /** Rendered static preview HTML for a Markdown note card (PR-009).
+   * Rust-generated with raw HTML stripped; empty until delivered. */
+  note: string;
   /** PR-022 tombstone: the file no longer resolves. The card stays visible
    * and labeled, keeps its frame, and can be dismissed via Move to Trash. */
   missing: boolean;
@@ -72,6 +75,11 @@ const KIND_TINT: Record<FileKind, string> = {
 
 export const ITEM_W = 180;
 export const ITEM_H = 120;
+/** Design width a note card's HTML renders at before scaling to its frame. */
+export const NOTE_W = 440;
+/** Default portrait frame for never-placed Markdown notes. */
+export const NOTE_CARD_W = 200;
+export const NOTE_CARD_H = 260;
 
 export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   static override type = "item" as const;
@@ -91,6 +99,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     kind: kindValidator,
     path: T.string,
     thumbnail: T.string,
+    note: T.string,
     missing: T.boolean,
   };
 
@@ -102,6 +111,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
       kind: "other",
       path: "",
       thumbnail: "",
+      note: "",
       missing: false,
     };
   }
@@ -123,7 +133,7 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   }
 
   override component(shape: ItemShape) {
-    const { name, kind, thumbnail, missing } = shape.props;
+    const { name, kind, thumbnail, note, missing } = shape.props;
 
     if (missing) {
       return (
@@ -162,6 +172,29 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
           >
             {name}
           </span>
+        </HTMLContainer>
+      );
+    }
+
+    if (kind === "markdown" && note) {
+      // Rendered at a fixed design width and scaled to the frame, so the
+      // typography holds its proportions at any card size (Spatial's note
+      // cards). Content is inert — pointer events stay with the shape.
+      const scale = shape.props.w / NOTE_W;
+      return (
+        <HTMLContainer
+          style={{ overflow: "hidden", pointerEvents: "all" }}
+        >
+          <div
+            className="note-card"
+            style={{
+              width: NOTE_W,
+              height: shape.props.h / scale,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+            }}
+            dangerouslySetInnerHTML={{ __html: note }}
+          />
         </HTMLContainer>
       );
     }

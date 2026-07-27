@@ -17,6 +17,7 @@ pub fn run() {
             commands::apply_layout,
             commands::rescan,
             commands::ensure_thumbnail,
+            commands::render_markdown,
             commands::import_files,
             commands::move_to_trash,
             commands::read_text_file,
