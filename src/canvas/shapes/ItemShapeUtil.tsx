@@ -35,8 +35,8 @@ function FolderCard({ name, count }: { name: string; count: number }) {
       >
         <path
           d="M0 80 V18 a14 14 0 0 1 14 -14 h76 a24 24 0 0 1 18 8 l12 17 a18 18 0 0 0 13 7 H300 a40 40 0 0 1 40 40 v4 H0 Z"
-          fill="#1d2123"
-          stroke="#2b2e2f"
+          fill="#1a1e20"
+          stroke="#282b2c"
           strokeWidth="1"
         />
       </svg>
@@ -47,8 +47,8 @@ function FolderCard({ name, count }: { name: string; count: number }) {
           right: 0,
           top: 44,
           bottom: 0,
-          background: "#232729",
-          border: "1px solid #2b2e2f",
+          background: "#202426",
+          border: "1px solid #282b2c",
           borderRadius: 22,
           display: "flex",
           flexDirection: "column",
@@ -173,21 +173,6 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
   onOpen?: (shape: ItemShape) => void;
 
   override onDoubleClick(shape: ItemShape) {
-    this.onOpen?.(shape);
-  }
-
-  /** Every openable card opens on a single click (Spatial's pattern) —
-   * folders and notes are doors, images and videos jump to the focus view
-   * (TRZ-0013). Drags still move the card: tldraw only fires onClick when
-   * the pointer never left the click threshold. Modifier-clicks are left to
-   * tldraw's selection semantics (shift extends, etc.) so media can still be
-   * selected without a marquee. */
-  override onClick(shape: ItemShape) {
-    const kind = shape.props.kind;
-    if (kind === "pdf" || kind === "other") return;
-    const inputs = this.editor.inputs;
-    if (inputs.getShiftKey() || inputs.getAltKey() || inputs.getCtrlKey())
-      return;
     this.onOpen?.(shape);
   }
 
