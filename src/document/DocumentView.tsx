@@ -18,7 +18,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { EditorView, keymap } from "@codemirror/view";
+import { EditorView, drawSelection, keymap } from "@codemirror/view";
 import { Compartment, EditorState } from "@codemirror/state";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import {
@@ -73,8 +73,8 @@ const theme = EditorView.theme(
       // CodeMirror sets the caret's height inline per line; padding extends
       // the border past it so the caret overshoots the text a little on
       // both ends without fighting the inline style.
-      marginTop: "-4px",
-      paddingBottom: "7px",
+      marginTop: "-3px",
+      paddingBottom: "6px",
     },
     ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
       backgroundColor: "#2e2e38",
@@ -362,6 +362,9 @@ export default function DocumentView({
             markdown({ base: markdownLanguage }),
             syntaxHighlighting(highlight),
             blockquoteLines,
+            // Without drawSelection the browser draws the caret natively —
+            // caretColor applies but width/height rules never do.
+            drawSelection(),
             EditorView.lineWrapping,
             theme,
             concealCompartment.current.of(
