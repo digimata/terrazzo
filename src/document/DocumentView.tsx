@@ -63,37 +63,40 @@ const theme = EditorView.theme(
       fontFamily: "-apple-system, 'SF Pro Text', system-ui, sans-serif",
       lineHeight: "1.7",
       padding: "48px 0 45vh",
-      caretColor: "#7aa2f7",
+      caretColor: "#e6e9ef",
     },
     ".cm-line": { padding: "0 4px" },
     "&.cm-focused": { outline: "none" },
-    "&.cm-focused .cm-cursor": { borderLeftColor: "#7aa2f7" },
+    "&.cm-focused .cm-cursor": { borderLeftColor: "#e6e9ef" },
     ".cm-selectionBackground, &.cm-focused .cm-selectionBackground": {
-      backgroundColor: "#2b3045",
+      backgroundColor: "#2e2e38",
     },
     ".cm-scroller": { overflow: "auto" },
   },
   { dark: true },
 );
 
+// Monochrome, like the Spatial-styled media view: hierarchy comes from
+// weight and size, never hue. Structure that isn't prose (marks, URLs,
+// quotes) recedes to gray instead of taking a color.
 const highlight = HighlightStyle.define([
-  { tag: tags.heading, color: "#7aa2f7", fontWeight: "600" },
-  { tag: tags.heading1, fontSize: "1.5em", color: "#7aa2f7", fontWeight: "600" },
-  { tag: tags.heading2, fontSize: "1.25em", color: "#7aa2f7", fontWeight: "600" },
-  { tag: tags.heading3, fontSize: "1.1em", color: "#7aa2f7", fontWeight: "600" },
+  { tag: tags.heading, color: "#e6e9ef", fontWeight: "600" },
+  { tag: tags.heading1, fontSize: "1.5em", color: "#e6e9ef", fontWeight: "600" },
+  { tag: tags.heading2, fontSize: "1.25em", color: "#e6e9ef", fontWeight: "600" },
+  { tag: tags.heading3, fontSize: "1.1em", color: "#e6e9ef", fontWeight: "600" },
   { tag: tags.strikethrough, textDecoration: "line-through", color: "#565f89" },
   { tag: tags.strong, color: "#e6e9ef", fontWeight: "600" },
-  { tag: tags.emphasis, color: "#e6e9ef", fontStyle: "italic" },
-  { tag: tags.link, color: "#9ece6a" },
+  { tag: tags.emphasis, fontStyle: "italic" },
+  { tag: tags.link, color: "#e6e9ef", textDecoration: "underline" },
   { tag: tags.url, color: "#565f89" },
   {
     tag: tags.monospace,
-    color: "#bb9af7",
+    color: "#c8ccd4",
     fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
     fontSize: "0.9em",
   },
   { tag: tags.quote, color: "#8a8fa3" },
-  { tag: tags.list, color: "#e0af68" },
+  { tag: tags.list, color: "#8a8fa3" },
   { tag: tags.meta, color: "#565f89" },
 ]);
 
