@@ -1,3 +1,15 @@
+/* The webview page itself: dark, and no rubber-band overscroll — the
+ * trackpad bounce otherwise reveals WKWebView's white page background
+ * behind the app's fixed-position roots. */
+html,
+body {
+  margin: 0;
+  background: #101011;
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+}
+
 .app-root {
   position: fixed;
   inset: 0;
