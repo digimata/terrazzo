@@ -387,9 +387,13 @@ export class ItemShapeUtil extends ShapeUtil<ItemShape> {
     );
   }
 
+  /** Canvas-overlay ring (v5 strokes this, not the React indicator): square
+   * corners to match the cards, and nothing for notes — a single click opens
+   * them, so a ring would only flash before the document covers it. */
   override getIndicatorPath(shape: ItemShape) {
     const path = new Path2D();
-    path.roundRect(0, 0, shape.props.w, shape.props.h, 8);
+    if (shape.props.kind === "markdown") return path;
+    path.rect(0, 0, shape.props.w, shape.props.h);
     return path;
   }
 }

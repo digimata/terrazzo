@@ -31,13 +31,17 @@ import {
   ItemShapeUtil,
   fixedSize,
 } from "./shapes/ItemShapeUtil";
-import { FigmaSelectionForeground, SelectionDimensions } from "./selection";
+import {
+  FigmaSelectionForeground,
+  SelectionDimensions,
+  SelectionOnlyIndicator,
+} from "./selection";
 import "./canvas.css";
 
 const shapeUtils = [ItemShapeUtil];
 // Same static type as the default selection foreground → replaces it
 // (mergeArraysAndReplaceDefaults keys on "type").
-const overlayUtils = [FigmaSelectionForeground];
+const overlayUtils = [FigmaSelectionForeground, SelectionOnlyIndicator];
 
 // Strip stock tldraw chrome we don't want; more goes as the design pass
 // replaces each piece (v0: the canvas is ours, the library is invisible).
@@ -47,7 +51,6 @@ const components = {
   NavigationPanel: null, // zoom controls + minimap cluster, bottom left
   MenuPanel: null, // hamburger + page menu, top left — ours below instead
   InFrontOfTheCanvas: SelectionDimensions, // Figma's W × H pill
-  HoveredShapeIndicator: null, // cards grow on hover instead of a blue ring
 };
 
 const GAP = 32;

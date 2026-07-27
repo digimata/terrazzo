@@ -10,11 +10,38 @@
 
 import {
   SelectionForegroundOverlayUtil,
+  ShapeIndicatorOverlayUtil,
   useEditor,
   useValue,
 } from "tldraw";
 
 export class FigmaSelectionForeground extends SelectionForegroundOverlayUtil {}
+
+/** The blue ring on hover is also canvas-overlay work (ShapeIndicatorOverlayUtil
+ * strokes selected + hovered shapes alike). Cards grow on hover instead, so
+ * this subclass drops the hovered id and keeps the ring for selection only. */
+export class SelectionOnlyIndicator extends ShapeIndicatorOverlayUtil {
+  override getOverlays() {
+    const overlays = super.getOverlays();
+    const overlay = overlays[0] as
+      | { props: { idsToDisplay: string[]; hintingShapeIds: string[] } }
+      | undefined;
+    if (!overlay) return overlays;
+    const hovered = this.editor.getHoveredShapeId();
+    if (hovered && !this.editor.getSelectedShapeIds().includes(hovered)) {
+      overlay.props.idsToDisplay = overlay.props.idsToDisplay.filter(
+        (id) => id !== hovered,
+      );
+      if (
+        overlay.props.idsToDisplay.length === 0 &&
+        overlay.props.hintingShapeIds.length === 0
+      ) {
+        return [];
+      }
+    }
+    return overlays;
+  }
+}
 
 (
   FigmaSelectionForeground.prototype as unknown as {
