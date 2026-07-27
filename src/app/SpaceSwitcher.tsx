@@ -13,12 +13,18 @@ interface Space {
   path: string;
 }
 
-function LayersIcon({ className }: { className?: string }) {
+function LayersIcon({
+  className,
+  size = 16,
+}: {
+  className?: string;
+  size?: number;
+}) {
   return (
     <svg
       className={className}
-      width="16"
-      height="16"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -107,10 +113,10 @@ export default function SpaceSwitcher({
         title="Spaces"
         onClick={() => setOpen((v) => !v)}
       >
-        <LayersIcon />
+        <LayersIcon size={19} />
         <svg
-          width="12"
-          height="12"
+          width="14"
+          height="14"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
