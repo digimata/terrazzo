@@ -112,7 +112,7 @@ const theme = EditorView.theme(
       left: "4px",
       right: "4px",
       top: "50%",
-      borderTop: "1px solid #33363a",
+      borderTop: "1px solid #26292c",
     },
   },
   { dark: true },
