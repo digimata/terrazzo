@@ -380,16 +380,23 @@ export default function DocumentView({
               indentWithTab,
             ]),
             markdown({ base: markdownLanguage }),
-            // -- means em dash: the second hyphen collapses the pair into —
-            // in the buffer itself (not a display trick). Code spans and
-            // blocks are exempt — CLI flags stay two hyphens.
+            // Typography input rules: the closing keystroke collapses the
+            // pair into the real character in the buffer itself (not a
+            // display trick). Code spans and blocks are exempt — CLI flags
+            // and ASCII arrows in code stay as typed.
             EditorView.inputHandler.of((v, from, to, text) => {
-              if (text !== "-" || from !== to) return false;
-              if (v.state.sliceDoc(from - 1, from) !== "-") return false;
+              const pairs: Record<string, string> = {
+                "--": "—",
+                "->": "→",
+              };
+              if (from !== to) return false;
+              const typed = v.state.sliceDoc(from - 1, from) + text;
+              const glyph = pairs[typed];
+              if (!glyph) return false;
               if (/Code/.test(syntaxTree(v.state).resolveInner(from, -1).name))
                 return false;
               v.dispatch({
-                changes: { from: from - 1, to, insert: "—" },
+                changes: { from: from - 1, to, insert: glyph },
                 selection: { anchor: from },
                 userEvent: "input.type",
               });
